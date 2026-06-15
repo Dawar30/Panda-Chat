@@ -26,7 +26,7 @@ export function initSockets(server) {
         socket.join(socket.user.userId);
         broadcastOnlineUsers();
 
-        setupMessageListeners(socket, io, userConnections, emitters);
+        setupMessageListeners(socket, io, userConnections, onlineUsers, emitters);
 
         socket.on("disconnect", () => {
             userConnections.delete(socket.user.userId);

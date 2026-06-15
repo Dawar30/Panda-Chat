@@ -1,30 +1,30 @@
 import Message from "../model/messages.model.js";
 import { uploadFile } from "../services/fileUpload.js";
+import { deleteFile } from "../services/fileUpload.js";
 
 export const sendMessage = async (req, res) => {
     try {
         let file = {};
-        const { sender, receiver, message, groupId } = req.body;
+        const { senderId, conversationId, content, type = "text", receiverId } = req.body;
 
         if (req.file) {
             const uploadedFile = await uploadFile(req.file.path);
             file.public_id = uploadedFile.public_id;
             file.url = uploadedFile.url;
+            file.size = req.file.size;
+            file.mimeType = req.file.mimetype;
         }
 
         const newMessage = await Message.create({
-            sender,
-            receiver: groupId ? undefined : receiver,
-            message,
-            file,
-            group: groupId || undefined,
-            isGroup: Boolean(groupId)
+            conversationId,
+            senderId,
+            type,
+            content,
+            file: Object.keys(file).length > 0 ? file : undefined
         });
 
-        if (groupId) {
-            req.ioEmitters.notifyGroupMessage(groupId, newMessage);
-        } else {
-            req.ioEmitters.notifyNewMessage(receiver, newMessage);
+        if (receiverId) {
+            req.ioEmitters.notifyNewMessage(receiverId, newMessage);
         }
 
         res.status(200).json({ success: true, message: "Message sent successfully", data: newMessage });
@@ -48,7 +48,7 @@ export const getMessages = async (req, res) => {
 
 export const deleteMessage = async (req, res) => {
     try {
-        const { messageId } = req.params;
+        const { id: messageId } = req.params;
         //delete from cloudinary if file exists
         const msg = await Message.findById(messageId);
         if (msg.file && msg.file.public_id) {
@@ -67,9 +67,10 @@ export const deleteMessage = async (req, res) => {
 
 export const editMessage = async (req, res) => {
     try {
-        const { messageId } = req.params;
-        const { newContent } = req.body;
+        const { id: messageId } = req.params;
+        const { content } = req.body;
         //if file editing is needed, delete old file from cloudinary and upload new one
+        let file = {};
         if (req.file) {
             const msg = await Message.findById(messageId);
             if (msg.file && msg.file.public_id) {
@@ -77,12 +78,14 @@ export const editMessage = async (req, res) => {
             }
             const fileData = req.file;
             const uploadedFile = await uploadFile(fileData.path);
-            newContent.file.public_id = uploadedFile.public_id;
-            newContent.file.url = uploadedFile.url;
+            file.public_id = uploadedFile.public_id;
+            file.url = uploadedFile.url;
+            file.size = req.file.size;
+            file.mimeType = req.file.mimetype;
         }
         const updatedMessage = await Message.findByIdAndUpdate(
             messageId,
-            { message: newContent },
+            { content, edited: true, ...(Object.keys(file).length > 0 && { file }) },
             { new: true }
         );
         if (!updatedMessage) {

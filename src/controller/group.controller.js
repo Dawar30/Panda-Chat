@@ -1,29 +1,27 @@
 import mongoose from "mongoose";
-import { Group } from "../model/group.model.js";
+import Groups from "../model/group.model.js";
 
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
 export const createGroup = async (req, res) => {
 	try {
-		const { name, Description, members = [], admins = [] } = req.body;
+		const { name, description, avatar } = req.body;
 
 		if (!name) {
 			return res.status(400).json({ success: false, message: "Group name is required" });
 		}
 
 		const creatorId = req.user?.userId;
-		const adminList = admins.length ? admins : (creatorId ? [creatorId] : []);
-		if (!adminList.length) {
-			return res.status(400).json({ success: false, message: "At least one admin is required" });
+		if (!creatorId) {
+			return res.status(400).json({ success: false, message: "User ID is required" });
 		}
 
-		const memberSet = new Set([...(members || []), ...adminList]);
-
-		const newGroup = await Group.create({
+		const newGroup = await Groups.create({
 			name,
-			Description,
-			members: Array.from(memberSet),
-			admins: adminList
+			description,
+			avatar,
+			createdBy: creatorId,
+			memberCount: 1
 		});
 
 		res.status(201).json({ success: true, message: "Group created", data: newGroup });
@@ -34,7 +32,7 @@ export const createGroup = async (req, res) => {
 
 export const getGroups = async (req, res) => {
 	try {
-		const groups = await Group.find();
+		const groups = await Groups.find();
 		res.status(200).json({ success: true, data: groups });
 	} catch (error) {
 		res.status(500).json({ success: false, message: "Internal server error", error: error.message });
@@ -48,7 +46,7 @@ export const getGroupById = async (req, res) => {
 			return res.status(400).json({ success: false, message: "Invalid group id" });
 		}
 
-		const group = await Group.findById(id);
+		const group = await Groups.findById(id);
 		if (!group) {
 			return res.status(404).json({ success: false, message: "Group not found" });
 		}
@@ -62,19 +60,18 @@ export const getGroupById = async (req, res) => {
 export const updateGroup = async (req, res) => {
 	try {
 		const { id } = req.params;
-		const { name, Description, members, admins } = req.body;
+		const { name, description, avatar } = req.body;
 
 		if (!isValidObjectId(id)) {
 			return res.status(400).json({ success: false, message: "Invalid group id" });
 		}
 
-		const updatedGroup = await Group.findByIdAndUpdate(
+		const updatedGroup = await Groups.findByIdAndUpdate(
 			id,
 			{
 				...(name !== undefined && { name }),
-				...(Description !== undefined && { Description }),
-				...(members !== undefined && { members }),
-				...(admins !== undefined && { admins })
+				...(description !== undefined && { description }),
+				...(avatar !== undefined && { avatar })
 			},
 			{ new: true }
 		);
@@ -97,7 +94,7 @@ export const deleteGroup = async (req, res) => {
 			return res.status(400).json({ success: false, message: "Invalid group id" });
 		}
 
-		const deletedGroup = await Group.findByIdAndDelete(id);
+		const deletedGroup = await Groups.findByIdAndDelete(id);
 		if (!deletedGroup) {
 			return res.status(404).json({ success: false, message: "Group not found" });
 		}

@@ -5,7 +5,7 @@ import { generateTokenAndSetCookie } from "../utils/generateTokenandSetCookies.j
 
 export const signUp = async (req, res) => {
     try {
-        const { name, email, password, roles, roleLevel = 1 } = req.body;
+        const { username, fullName, email, password, avatar } = req.body;
 
         const checkUser = await user.find({ email });
         if (checkUser.length != 0) {
@@ -14,11 +14,13 @@ export const signUp = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, Number(process.env.saltRounds));
         const newUser = await user.create({
-            name,
+            username,
+            name: fullName,
             email,
             password: hashedPassword,
-            roles,
-            roleLevel
+            avatar,
+            roles: ["user"],
+            lastSeen: new Date()
         })
         res.status(200).json({ success: true, message: "successfuly created user", data: { name: newUser.name} });
 

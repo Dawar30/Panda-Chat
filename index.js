@@ -4,6 +4,9 @@ import DBconnection from "./config/db.js"
 import userRoutes from "./src/routes/user.routes.js"
 import messageRoutes from "./src/routes/messages.routes.js"
 import groupRoutes from "./src/routes/group.routes.js"
+import conversationRoutes from "./src/routes/conversation.routes.js"
+import conversationMemberRoutes from "./src/routes/conversationMember.routes.js"
+import groupMemberRoutes from "./src/routes/groupMember.routes.js"
 import cookieParser from "cookie-parser"
 import { initSockets } from "./src/socket/index.js"
 
@@ -35,6 +38,9 @@ app.use((req, res, next) => {
 app.use("/api/user", userRoutes)
 app.use("/api/message", messageRoutes)
 app.use("/api/group", groupRoutes)
+app.use("/api/conversation", conversationRoutes)
+app.use("/api/conversation-member", conversationMemberRoutes)
+app.use("/api/group-member", groupMemberRoutes)
 
 //logger implementation can be added here
 server.listen(port, () => {

@@ -2,7 +2,7 @@ import cloudinary from "../../../config/cloudinary.js";
 import Message from "../../model/messages.model.js";
 import User from "../../model/user.model.js";
 
-export function setupMessageListeners(socket, io, userConnections, emitters) {
+export function setupMessageListeners(socket, io, userConnections, onlineUsers, emitters) {
     let typingTargetId = null;
 
     const getConversationId = (firstUserId, secondUserId) => {
@@ -20,6 +20,28 @@ export function setupMessageListeners(socket, io, userConnections, emitters) {
         }
         io.to(userId).emit(eventName, payload);
     };
+
+    socket.on("isOnline", (data = {}, callback = () => {}) => {
+        const targetUserId = typeof data.userId === "string"
+            ? data.userId.trim()
+            : typeof data.receiverId === "string"
+                ? data.receiverId.trim()
+                : "";
+
+        if (!targetUserId) {
+            callback({
+                success: false,
+                error: "userId is required"
+            });
+            return;
+        }
+
+        callback({
+            success: true,
+            userId: targetUserId,
+            isOnline: onlineUsers.has(targetUserId)
+        });
+    });
 
     socket.on("message:send", async (data = {}, callback = () => {}) => {
         try {
@@ -53,12 +75,11 @@ export function setupMessageListeners(socket, io, userConnections, emitters) {
             }
 
             const newMessage = await Message.create({
-                sender: socket.user.userId,
-                receiver: receiverId,
+                senderId: socket.user.userId,
                 conversationId,
-                message: text,
-                file,
-                isGroup: false
+                type: fileSource ? "document" : "text",
+                content: text,
+                file: file || undefined
             });
 
             emitToUser(receiverId, "message:new", newMessage);
@@ -87,7 +108,18 @@ export function setupMessageListeners(socket, io, userConnections, emitters) {
                 return;
             }
 
-            const messages = await Message.find({ conversationId: resolvedConversationId }).sort({ createdAt: -1 });
+            const messages = await Message.aggregate([
+                {
+                    $match: {
+                        conversationId: resolvedConversationId
+                    }
+                },
+                {
+                    $sort: {
+                        createdAt: -1
+                    }
+                }
+            ]);
 
             callback({
                 success: true,
@@ -119,7 +151,7 @@ export function setupMessageListeners(socket, io, userConnections, emitters) {
             const updated = await Message.findByIdAndUpdate(
                 messageId,
                 {
-                    message: text,
+                    content: text,
                     edited: true
                 },
                 { new: true }
@@ -179,18 +211,14 @@ export function setupMessageListeners(socket, io, userConnections, emitters) {
                 return;
             }
 
-            const updated = await Message.findByIdAndUpdate(
-                messageId,
-                { isRead: true },
-                { new: true }
-            );
+            const updated = await Message.findById(messageId);
 
             if (!updated) {
                 callback({ success: false, error: "Message not found" });
                 return;
             }
 
-            io.to(updated.sender.toString()).emit("message:read:update", {
+            io.to(updated.senderId.toString()).emit("message:read:update", {
                 messageId: updated._id
             });
 
@@ -203,34 +231,70 @@ export function setupMessageListeners(socket, io, userConnections, emitters) {
     socket.on("conversations:get", async (_, callback = () => {}) => {
         try {
             const userId = socket.user.userId.toString();
-            const messages = await Message.find({
-                conversationId: { $exists: true, $ne: null },
-                $or: [{ sender: userId }, { receiver: userId }]
-            })
-                .sort({ createdAt: -1 })
-                .populate("sender", "name avatar")
-                .populate("receiver", "name avatar");
-
-            const conversationsMap = new Map();
-
-            for (const message of messages) {
-                if (!message.conversationId || conversationsMap.has(message.conversationId)) {
-                    continue;
+            const conversations = await Message.aggregate([
+                {
+                    $match: {
+                        conversationId: { $exists: true, $ne: null }
+                    }
+                },
+                {
+                    $sort: { createdAt: -1 }
+                },
+                {
+                    $group: {
+                        _id: "$conversationId",
+                        lastMessage: { $first: "$$ROOT" }
+                    }
+                },
+                {
+                    $lookup: {
+                        from: "users",
+                        localField: "lastMessage.senderId",
+                        foreignField: "_id",
+                        as: "sender"
+                    }
+                },
+                {
+                    $unwind: {
+                        path: "$sender",
+                        preserveNullAndEmptyArrays: true
+                    }
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        conversationId: "$_id",
+                        lastMessage: {
+                            $mergeObjects: [
+                                "$lastMessage",
+                                {
+                                    senderId: {
+                                        _id: "$sender._id",
+                                        name: "$sender.name",
+                                        avatar: "$sender.avatar"
+                                    }
+                                }
+                            ]
+                        },
+                        senderId: {
+                            _id: "$sender._id",
+                            name: "$sender.name",
+                            avatar: "$sender.avatar"
+                        }
+                    }
                 }
+            ]);
 
-                const otherParticipant = message.sender?._id?.toString() === userId ? message.receiver : message.sender;
-
-                conversationsMap.set(message.conversationId, {
-                    conversationId: message.conversationId,
-                    lastMessage: message,
-                    participants: [message.sender, message.receiver],
-                    otherParticipant
-                });
-            }
+            const withParticipant = conversations.map((conversation) => ({
+                ...conversation,
+                otherParticipant: conversation.senderId?._id?.toString() === userId
+                    ? null
+                    : conversation.senderId
+            }));
 
             callback({
                 success: true,
-                conversations: [...conversationsMap.values()]
+                conversations: withParticipant
             });
         } catch (error) {
             callback({ success: false, error: error.message });
