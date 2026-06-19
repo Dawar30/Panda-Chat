@@ -45,6 +45,12 @@ const messageSchema = new mongoose.Schema({
     deletedForEveryone: {
         type: Boolean,
         default: false
+    },
+
+    parentMessageId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Messages",
+        default: null
     }
 
 }, { timestamps: true });

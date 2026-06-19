@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import Conversation from "../model/converstation.model.js";
-import redisClient from "../../config/redis.js";
+import * as cacheService from "../services/cacheService.js";
 
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
@@ -89,6 +89,9 @@ export const createConversation = async (req, res) => {
             lastMessageAt
         });
 
+        // Invalidate conversations cache
+        await cacheService.del(cacheService.KEYS.CONVERSATIONS_ALL);
+
         res.status(201).json({ success: true, message: "Conversation created", data: conversation });
     } catch (error) {
         res.status(500).json({ success: false, message: "Internal server error", error: error.message });
@@ -97,9 +100,13 @@ export const createConversation = async (req, res) => {
 
 export const getConversations = async (req, res) => {
     try {
-        const conversations = await Conversation.aggregate(buildConversationPipeline());
+        const { data: conversations, source } = await cacheService.getOrSet(
+            cacheService.KEYS.CONVERSATIONS_ALL,
+            cacheService.TTL.MEDIUM, // 120s
+            async () => Conversation.aggregate(buildConversationPipeline())
+        );
 
-        res.status(200).json({ success: true, data: conversations });
+        res.status(200).json({ success: true, data: conversations, source });
     } catch (error) {
         res.status(500).json({ success: false, message: "Internal server error", error: error.message });
     }
@@ -113,15 +120,22 @@ export const getConversationById = async (req, res) => {
             return res.status(400).json({ success: false, message: "Invalid conversation id" });
         }
 
-        const [conversation] = await Conversation.aggregate(
-            buildConversationPipeline({ _id: new mongoose.Types.ObjectId(id) })
+        const { data: conversation, source } = await cacheService.getOrSet(
+            cacheService.KEYS.CONVERSATION(id),
+            cacheService.TTL.LONG, // 300s
+            async () => {
+                const [conv] = await Conversation.aggregate(
+                    buildConversationPipeline({ _id: new mongoose.Types.ObjectId(id) })
+                );
+                return conv || null;
+            }
         );
 
         if (!conversation) {
             return res.status(404).json({ success: false, message: "Conversation not found" });
         }
 
-        res.status(200).json({ success: true, data: conversation });
+        res.status(200).json({ success: true, data: conversation, source });
     } catch (error) {
         res.status(500).json({ success: false, message: "Internal server error", error: error.message });
     }
@@ -156,6 +170,12 @@ export const updateConversation = async (req, res) => {
             buildConversationPipeline({ _id: new mongoose.Types.ObjectId(id) })
         );
 
+        // Invalidate caches
+        await Promise.all([
+            cacheService.del(cacheService.KEYS.CONVERSATION(id)),
+            cacheService.del(cacheService.KEYS.CONVERSATIONS_ALL),
+        ]);
+
         res.status(200).json({ success: true, message: "Conversation updated", data: conversationWithRelations });
     } catch (error) {
         res.status(500).json({ success: false, message: "Internal server error", error: error.message });
@@ -174,6 +194,12 @@ export const deleteConversation = async (req, res) => {
         if (!deletedConversation) {
             return res.status(404).json({ success: false, message: "Conversation not found" });
         }
+
+        // Invalidate caches
+        await Promise.all([
+            cacheService.del(cacheService.KEYS.CONVERSATION(id)),
+            cacheService.del(cacheService.KEYS.CONVERSATIONS_ALL),
+        ]);
 
         res.status(200).json({ success: true, message: "Conversation deleted" });
     } catch (error) {

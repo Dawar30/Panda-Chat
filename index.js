@@ -9,8 +9,8 @@ import conversationMemberRoutes from "./src/routes/conversationMember.routes.js"
 import groupMemberRoutes from "./src/routes/groupMember.routes.js"
 import cookieParser from "cookie-parser"
 import { initSockets } from "./src/socket/index.js"
-
-
+import { gracefulShutdown as redisShutdown } from "./config/redis.js"
+import { apiLimiter } from "./src/middleware/rateLimiter.js"
 
 
 DBconnection()
@@ -21,14 +21,15 @@ const port = process.env.PORT || 5000
 app.use(express.json())
 app.use(cookieParser())
 
+// Global API rate limiter: 100 requests/minute per IP
+app.use("/api", apiLimiter)
 
 const server = http.createServer(app)
 
 // initialize socket.io with the HTTP server
-const io = initSockets(server)
+const { io, emitters, shutdown: socketShutdown } = initSockets(server)
 
 // Middleware to make emitters available in controllers
-const { emitters } = io;
 app.use((req, res, next) => {
   req.ioEmitters = emitters;
   next();
@@ -41,6 +42,34 @@ app.use("/api/group", groupRoutes)
 app.use("/api/conversation", conversationRoutes)
 app.use("/api/conversation-member", conversationMemberRoutes)
 app.use("/api/group-member", groupMemberRoutes)
+
+// ─── Graceful Shutdown ──────────────────────────────────────────
+const shutdown = async (signal) => {
+  console.log(`\n${signal} received — starting graceful shutdown...`);
+
+  // 1. Stop accepting new connections
+  server.close(() => {
+    console.log("HTTP server closed");
+  });
+
+  // 2. Close Socket.IO
+  try {
+    socketShutdown();
+    io.close();
+    console.log("Socket.IO closed");
+  } catch (err) {
+    console.error("Socket.IO shutdown error:", err.message);
+  }
+
+  // 3. Close all Redis connections
+  await redisShutdown();
+
+  console.log("Graceful shutdown complete");
+  process.exit(0);
+};
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
 
 //logger implementation can be added here
 server.listen(port, () => {

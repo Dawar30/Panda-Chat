@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Groups from "../model/group.model.js";
+import * as cacheService from "../services/cacheService.js";
 
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
@@ -24,6 +25,9 @@ export const createGroup = async (req, res) => {
 			memberCount: 1
 		});
 
+		// Invalidate groups cache
+		await cacheService.del(cacheService.KEYS.GROUPS_ALL);
+
 		res.status(201).json({ success: true, message: "Group created", data: newGroup });
 	} catch (error) {
 		res.status(500).json({ success: false, message: "Internal server error", error: error.message });
@@ -32,8 +36,13 @@ export const createGroup = async (req, res) => {
 
 export const getGroups = async (req, res) => {
 	try {
-		const groups = await Groups.find();
-		res.status(200).json({ success: true, data: groups });
+		const { data: groups, source } = await cacheService.getOrSet(
+			cacheService.KEYS.GROUPS_ALL,
+			cacheService.TTL.MEDIUM, // 120s
+			async () => Groups.find()
+		);
+
+		res.status(200).json({ success: true, data: groups, source });
 	} catch (error) {
 		res.status(500).json({ success: false, message: "Internal server error", error: error.message });
 	}
@@ -46,12 +55,17 @@ export const getGroupById = async (req, res) => {
 			return res.status(400).json({ success: false, message: "Invalid group id" });
 		}
 
-		const group = await Groups.findById(id);
+		const { data: group, source } = await cacheService.getOrSet(
+			cacheService.KEYS.GROUP(id),
+			cacheService.TTL.LONG, // 300s
+			async () => Groups.findById(id)
+		);
+
 		if (!group) {
 			return res.status(404).json({ success: false, message: "Group not found" });
 		}
 
-		res.status(200).json({ success: true, data: group });
+		res.status(200).json({ success: true, data: group, source });
 	} catch (error) {
 		res.status(500).json({ success: false, message: "Internal server error", error: error.message });
 	}
@@ -80,6 +94,12 @@ export const updateGroup = async (req, res) => {
 			return res.status(404).json({ success: false, message: "Group not found" });
 		}
 
+		// Invalidate caches
+		await Promise.all([
+			cacheService.del(cacheService.KEYS.GROUP(id)),
+			cacheService.del(cacheService.KEYS.GROUPS_ALL),
+		]);
+
 		res.status(200).json({ success: true, message: "Group updated", data: updatedGroup });
 	} catch (error) {
 		res.status(500).json({ success: false, message: "Internal server error", error: error.message });
@@ -98,6 +118,12 @@ export const deleteGroup = async (req, res) => {
 		if (!deletedGroup) {
 			return res.status(404).json({ success: false, message: "Group not found" });
 		}
+
+		// Invalidate caches
+		await Promise.all([
+			cacheService.del(cacheService.KEYS.GROUP(id)),
+			cacheService.del(cacheService.KEYS.GROUPS_ALL),
+		]);
 
 		res.status(200).json({ success: true, message: "Group deleted" });
 	} catch (error) {

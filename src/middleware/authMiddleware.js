@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken"
+import * as sessionService from "../services/sessionService.js";
 
 export const varifyToken = async (req , res , next) => {
     const token = req.cookies?.token;
@@ -6,6 +7,12 @@ export const varifyToken = async (req , res , next) => {
         return res.status(401).json({Message: "Access denied"})
     }
     try {
+        // Check if the token has been blacklisted (e.g., after logout)
+        const blacklisted = await sessionService.isBlacklisted(token);
+        if (blacklisted) {
+            return res.status(401).json({ message: "Token has been revoked" });
+        }
+
         const decoded = jwt.verify(token,process.env.SECRET_KEY)
         req.user = decoded
         next()
