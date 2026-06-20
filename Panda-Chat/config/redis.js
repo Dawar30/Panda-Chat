@@ -9,7 +9,7 @@ const retryStrategy = (retries) => {
 };
 
 const redisOptions = {
-  url: process.env.REDIS_URL || "redis://localhost:6379",
+  url: process.env.REDIS_URL,
   socket: {
     reconnectStrategy: retryStrategy,
     connectTimeout: 10_000,
