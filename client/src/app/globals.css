@@ -1,30 +1,138 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-primary: #0185D1;
+  --color-primary-black:#1A1A1A;
+  --color-secondary-black:#525252;
+  --color-blue-primary:#0185D0;
+  --color-dashboard-bg:#F6FCFF;
+  --color-blueShadow:#CEF4FF;
+  --color-blue100:#BBDEFB;
+  --color-blue200:#90CAF9;
+  --color-white: #FFFFFF;
+  --color-dropdown-focus: #EFEFEF;
+  --color-secondary: #0185D11F;
+  --color-cards: #F4F4F4;
+  --color-contact: #F3F5F8;
+  --color-darkblue: #0C204A;
+  --color-inputbg: #FAFDFF1F;
+  --color-cardblue: #0C204A;
+  --color-eef7f8: #EEF7F8;
+  --color-browned: #55443B;
+  --color-black:#1A1A1A;
+  --color-black-secondary:#525252;
+  --shadow-primary: 0 0 28px #0185D18A;
+  --color-borderblue: #0E305D;
+  --color-bottom-line:#D9D9D9;
+  --color-gray:#6F6F6F;
+  --color-gray400:#BDBDBD;
+  --color-secondary-gray:#8B8B8B;
+  --color-gray50:#FAFAFA;
+  --color-gray100:#F5F5F5;
+  --color-lightblue:rgba(227, 242, 253, 1);
+  --color-lightblue50:#E3F2FD;
+  --color-green50:#66BB6A;
+  --color-purple50:#F3E5F5;
+  --color-lightblue400:#42A5F5;
+  --color-green400:#66BB6A;
+  --color-green500:#4CAF50;
+  --color-green800:#2E7D32;
+  --color-purple400:#AB47BC;
+  --color-orange400:#FFA726;
+  --color-red700:#D32F2F;
+  --color-lightblue700:#1976D2;
+  --color-purple700:#7B1FA2;
+  --color-orange700:#F57C00;
+  --color-red800:#C62828;
+  --color-red500:#F44336;
+  --color-red50:#FFEBEE;
+
+
+
+  --background-image-0c2047: linear-gradient(90deg, #0C20473D 0%, #0C2047D6 100%);
+  --background-image-canada-overlay: linear-gradient(249.57deg, rgba(1, 137, 209, 0.1728) 29.15%, rgba(0, 0, 0, 0.54) 100%);
+  --background-image-auth-gradient: linear-gradient(to bottom, #FFFFFF 0%, #F3F3F3 100%);
+  --auth-border-gradient: linear-gradient(to left, #0185D0 0%, #9FDCFF 75%);
+  --modal-gradient: linear-gradient(149.82deg, rgba(1, 133, 208, 0.74) -185.2%, rgba(1, 133, 208, 0.34) -32.12%);
+
+  --font-poppins: var(--font-poppins-next);
+  --font-cormorant: var(--font-cormorant-next);
+  --font-outfit: var(--font-outfit-next);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Hide scrollbar but keep scrolling */
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* WebKit-based browsers (Chrome, Safari, Edge) */
+.no-scrollbar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
-
+.no-scrollbar::-webkit-scrollbar-thumb,
+.no-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
 body {
-  /* background: var(--background); */
-  /* color: var(--foreground); */
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-poppins);
 }
 
-.main{
-    background-color:white
+.container{
+  width: 100%;
+  margin-right: auto;
+  margin-left: auto;
+  padding-right: 1.5rem;
+  padding-left: 1.5rem;
+ }
+/* .blogcontainer{
+  width: 100%;
+  margin-right: auto;
+  margin-left: auto;
+  padding-right: 1.5rem;
+  padding-left: 1.5rem;
+ } */
+@layer components {
+  .blogcontainer {
+    @apply w-full lg:mx-auto px-6 sm:px-16 lg:px-24;
+    /* @apply w-full mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl; */
+  }
+  .bg-auth-gradient {
+    background: var(--background-image-auth-gradient);
+  }
+  .border-auth-gradient {
+    position: relative;
+    background: white;
+    border-radius: 1px;
+    border: 1px solid transparent;
+    background-clip: padding-box;
+  }
+  .border-auth-gradient::before {
+    content: '';
+    position: absolute;
+    inset: -0.8px;
+    background: var(--auth-border-gradient);
+    border-radius: inherit;
+    z-index: -1;
+  }
+  .modal-bg {
+  background: var(--modal-gradient);
+}
+}
+.font-poppins{
+  font-family: var(--font-poppins);
+}
+.font-outfit{
+  font-family: var(--font-outfit);
+}
+.font-cormorant{
+  font-family: var(--font-cormorant);
+}
+
+.tracking-none{
+  letter-spacing: 0;
 }

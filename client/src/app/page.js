@@ -7,9 +7,9 @@ import { isAuthenticated } from "@/services/tokenStorage";
 export default function Home() {
   const router = useRouter();
 
-  useEffect(() => {
-    router.replace(isAuthenticated() ? "/chat" : "/login");
-  }, [router]);
+  // useEffect(() => {
+  //   router.replace(isAuthenticated() ? "/chat" : "/login");
+  // }, [router]);
 
   return null;
 }

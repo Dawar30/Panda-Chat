@@ -27,11 +27,11 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  useEffect(() => {
-    if (isAuthenticated()) {
-      router.replace("/chat");
-    }
-  }, [router]);
+  // useEffect(() => {
+  //   if (isAuthenticated()) {
+  //     router.replace("/chat");
+  //   }
+  // }, [router]);
 
   useEffect(() => {
     clearErrors();
@@ -87,7 +87,7 @@ const Login = () => {
         }`}
       >
        
-        <div className="flex flex-col items-center mt-20 w-125 h-125">
+        <div className="flex flex-col items-center w-125 h-125">
           <h1 className="text-3xl font-bold my-10">
             {isSignup ? "Create Account" : "Welcome Back !!"}
           </h1>
@@ -117,7 +117,7 @@ const Login = () => {
           )}
 
           {/* Email Input */}
-          <div className="relative w-90 mb-10">
+          <div className="relative w-90 mb-6">
             {" "}
             <div className="absolute mt-4.5 inset-s-0 flex items-center ps-5 pointer-events-none">
               {" "}
@@ -149,7 +149,7 @@ const Login = () => {
             {errors.email && <span className="absolute mt-1 text-red-600">{errors.email.message}</span> }
           </div>
           {/* Password Input */}
-          <div className="relative w-90 mb-6">
+          <div className="relative w-90 mb-3">
             {" "}
             <div className="absolute mt-3.5 inset-s-0 flex items-center ps-5 pointer-events-none">
               {" "}
@@ -188,7 +188,7 @@ const Login = () => {
                 }
               })}
             />
-            {errors.password && <span className="absolute mt-6 text-red-600">{errors.password.message}</span>}
+            {errors.password && <span className="absolute mt-1 text-red-600">{errors.password.message}</span>}
             <img
               src={showPass ? "/view.png" : "/hide.png"}
               className="absolute right-4.5 top-3.75 w-4.5 cursor-pointer"
@@ -235,17 +235,17 @@ const Login = () => {
           )}
 
           {/* Button */}
-          <button disabled={loading} className="mt-10 w-90 text-white bg-[rgb(252,194,164)] hover:bg-[rgb(250,174,136)] focus:ring-4 focus:ring-blue-300 font-medium rounded-[50px] text-sm px-5 py-3.5 disabled:opacity-70 disabled:cursor-not-allowed">
+          <button disabled={loading} className="mt-10 w-90 text-white bg-blue-primary hover:bg-blue-400 focus:ring-4 focus:ring-blue-300 font-medium rounded-[50px] text-sm px-5 py-3.5 disabled:opacity-70 disabled:cursor-not-allowed">
             {loading ? "Please wait..." : isSignup ? "Sign Up" : "Sign In"}
           </button>
 
           {/* Switch Mode */}
-          <div className="relative top-10">
+          <div className="relative top-2">
             {!isSignup ? (
               <h1>
                 Dont Have an Account?{" "}
                 <span
-                  className="font-bold text-[rgb(252,194,164)] cursor-pointer"
+                  className="font-bold text-blue-primary cursor-pointer"
                   onClick={() => setIsSignup(true)}
                 >
                   Register
@@ -255,7 +255,7 @@ const Login = () => {
               <h1>
                 Already have an Account?{" "}
                 <span
-                  className="font-bold text-[rgb(252,194,164)] cursor-pointer"
+                  className="font-bold text-blue-primary cursor-pointer"
                   onClick={() => setIsSignup(false)}
                 >
                   Login
@@ -272,7 +272,7 @@ const Login = () => {
           isSignup ? "-translate-x-full" : "translate-x-0"
         } overflow-hidden`}
       >
-        <div className="absolute w-75 rounded-t-[300px] h-128.75 bg-[rgba(250,216,200,1)] top-31.5">
+        <div className="absolute w-75 rounded-t-[300px] h-128.75 bg-blue-primary top-31.5">
           <div className="absolute h-122.5 w-100">
             <img
               src="/image2.png"

@@ -2,17 +2,17 @@
 import { useEffect } from "react";
 import { io } from "socket.io-client";
 
-useEffect(()=>{
-    const socket = io("http://localhost:5000");
+// useEffect(()=>{
+//     const socket = io("http://localhost:5000");
 
-    socket.on("connect", () => {
-        console.log("Connected to server");
-    });
+//     socket.on("connect", () => {
+//         console.log("Connected to server");
+//     });
 
-    return () => {
-        socket.disconnect();
-    };
-},[])
+//     return () => {
+//         socket.disconnect();
+//     };
+// },[])
 
 export default function Socket() {
     return(
