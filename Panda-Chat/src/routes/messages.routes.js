@@ -20,9 +20,9 @@ const router = Router()
 // Apply API rate limiter (100 requests/minute) to all message routes
 router.use(apiLimiter);
 
-router.post("/send", varifyToken, upload.single('file'), sendMessage)
+router.post("/send", varifyToken, upload.single('file'), sendMessageValidation, handleValidationErrors, sendMessage)
 router.get("/get", varifyToken, getMessages)
-router.put("/edit/:id", varifyToken, upload.single('file'), editMessage)
-router.delete("/delete/:id", varifyToken, deleteMessage)
+router.put("/edit/:id", varifyToken, upload.single('file'), updateMessageValidation, handleValidationErrors, editMessage)
+router.delete("/delete/:id", varifyToken, deleteMessageValidation, handleValidationErrors, deleteMessage)
 
 export default router

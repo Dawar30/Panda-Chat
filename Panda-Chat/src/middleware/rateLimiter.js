@@ -138,7 +138,7 @@ export const loginLimiter = rateLimitMiddleware("login", 300, 5, (req) => {
 });
 
 /** Rate limit: 3 signups per hour per IP */
-export const signupLimiter = rateLimitMiddleware("signup", 3600, 3);
+export const signupLimiter = rateLimitMiddleware("signup", 3600, 30);
 
 /** Rate limit: 100 API requests per minute per IP */
 export const apiLimiter = rateLimitMiddleware("api", 60, 100);

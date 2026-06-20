@@ -81,9 +81,25 @@ export const createGroupMember = async (req, res) => {
 
 export const getGroupMembers = async (req, res) => {
     try {
-        const members = await GroupMember.aggregate(buildGroupMemberPipeline());
+        const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 10));
+        const skip = (page - 1) * limit;
 
-        res.status(200).json({ success: true, data: members });
+        const total = await GroupMember.countDocuments();
+        const pipeline = buildGroupMemberPipeline();
+        pipeline.push({ $skip: skip }, { $limit: limit });
+        const members = await GroupMember.aggregate(pipeline);
+
+        res.status(200).json({
+            success: true,
+            data: members,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
+            }
+        });
     } catch (error) {
         res.status(500).json({ success: false, message: "Internal server error", error: error.message });
     }

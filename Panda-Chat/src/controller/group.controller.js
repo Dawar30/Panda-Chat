@@ -26,7 +26,7 @@ export const createGroup = async (req, res) => {
 		});
 
 		// Invalidate groups cache
-		await cacheService.del(cacheService.KEYS.GROUPS_ALL);
+		await cacheService.invalidatePrefix(cacheService.KEYS.GROUPS_ALL);
 
 		res.status(201).json({ success: true, message: "Group created", data: newGroup });
 	} catch (error) {
@@ -36,13 +36,33 @@ export const createGroup = async (req, res) => {
 
 export const getGroups = async (req, res) => {
 	try {
-		const { data: groups, source } = await cacheService.getOrSet(
-			cacheService.KEYS.GROUPS_ALL,
+		const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+		const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 10));
+		const skip = (page - 1) * limit;
+
+		const cacheKey = `${cacheService.KEYS.GROUPS_ALL}:${page}:${limit}`;
+
+		const { data, source } = await cacheService.getOrSet(
+			cacheKey,
 			cacheService.TTL.MEDIUM, // 120s
-			async () => Groups.find()
+			async () => {
+				const total = await Groups.countDocuments();
+				const groups = await Groups.find().skip(skip).limit(limit);
+				return { groups, total };
+			}
 		);
 
-		res.status(200).json({ success: true, data: groups, source });
+		res.status(200).json({
+			success: true,
+			data: data.groups,
+			pagination: {
+				page,
+				limit,
+				total: data.total,
+				totalPages: Math.ceil(data.total / limit)
+			},
+			source
+		});
 	} catch (error) {
 		res.status(500).json({ success: false, message: "Internal server error", error: error.message });
 	}
@@ -97,7 +117,7 @@ export const updateGroup = async (req, res) => {
 		// Invalidate caches
 		await Promise.all([
 			cacheService.del(cacheService.KEYS.GROUP(id)),
-			cacheService.del(cacheService.KEYS.GROUPS_ALL),
+			cacheService.invalidatePrefix(cacheService.KEYS.GROUPS_ALL),
 		]);
 
 		res.status(200).json({ success: true, message: "Group updated", data: updatedGroup });
@@ -122,7 +142,7 @@ export const deleteGroup = async (req, res) => {
 		// Invalidate caches
 		await Promise.all([
 			cacheService.del(cacheService.KEYS.GROUP(id)),
-			cacheService.del(cacheService.KEYS.GROUPS_ALL),
+			cacheService.invalidatePrefix(cacheService.KEYS.GROUPS_ALL),
 		]);
 
 		res.status(200).json({ success: true, message: "Group deleted" });

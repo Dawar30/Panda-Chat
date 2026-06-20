@@ -26,7 +26,7 @@ export const signUp = async (req, res) => {
         })
 
         // Invalidate users cache
-        await cacheService.del(cacheService.KEYS.USERS_ALL);
+        await cacheService.invalidatePrefix(cacheService.KEYS.USERS_ALL);
 
         res.status(200).json({ success: true, message: "successfuly created user", data: { name: newUser.name} });
 
@@ -97,14 +97,34 @@ export const logout = async (req, res) => {
 
 export const getAllUsers = async (req, res) => {
     try {
+        const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 10));
+        const skip = (page - 1) * limit;
+
+        const cacheKey = `${cacheService.KEYS.USERS_ALL}:${page}:${limit}`;
+
         // Cache-aside pattern: check Redis first, then DB
-        const { data: users, source } = await cacheService.getOrSet(
-            cacheService.KEYS.USERS_ALL,
+        const { data, source } = await cacheService.getOrSet(
+            cacheKey,
             cacheService.TTL.MEDIUM, // 120s
-            async () => user.find()
+            async () => {
+                const total = await user.countDocuments();
+                const users = await user.find().skip(skip).limit(limit);
+                return { users, total };
+            }
         );
 
-        res.status(200).json({ success: true, data: users, source });
+        res.status(200).json({
+            success: true,
+            data: data.users,
+            pagination: {
+                page,
+                limit,
+                total: data.total,
+                totalPages: Math.ceil(data.total / limit)
+            },
+            source
+        });
     } catch (error) {
         res.status(500).json({ success: false, message: "Internal server error", error: error.message });
         console.log(error);

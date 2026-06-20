@@ -26,7 +26,7 @@ export const sendMessage = async (req, res) => {
 
         // Invalidate relevant caches
         await Promise.all([
-            cacheService.del(cacheService.KEYS.MESSAGES_ALL),
+            cacheService.invalidatePrefix(cacheService.KEYS.MESSAGES_ALL),
             conversationId
                 ? cacheService.del(cacheService.KEYS.MESSAGES_CONVERSATION(conversationId))
                 : Promise.resolve(),
@@ -45,13 +45,33 @@ export const sendMessage = async (req, res) => {
 
 export const getMessages = async (req, res) => {
     try {
-        const { data: messages, source } = await cacheService.getOrSet(
-            cacheService.KEYS.MESSAGES_ALL,
+        const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 10));
+        const skip = (page - 1) * limit;
+
+        const cacheKey = `${cacheService.KEYS.MESSAGES_ALL}:${page}:${limit}`;
+
+        const { data, source } = await cacheService.getOrSet(
+            cacheKey,
             cacheService.TTL.SHORT, // 60s
-            async () => Message.find()
+            async () => {
+                const total = await Message.countDocuments();
+                const messages = await Message.find().skip(skip).limit(limit);
+                return { messages, total };
+            }
         );
 
-        res.status(200).json({ success: true, data: messages, source });
+        res.status(200).json({
+            success: true,
+            data: data.messages,
+            pagination: {
+                page,
+                limit,
+                total: data.total,
+                totalPages: Math.ceil(data.total / limit)
+            },
+            source
+        });
     } catch (error) {
         res.status(500).json({ success: false, message: "Internal server error", error: error.message });
         console.log(error);
@@ -73,7 +93,7 @@ export const deleteMessage = async (req, res) => {
 
         // Invalidate relevant caches
         await Promise.all([
-            cacheService.del(cacheService.KEYS.MESSAGES_ALL),
+            cacheService.invalidatePrefix(cacheService.KEYS.MESSAGES_ALL),
             msg?.conversationId
                 ? cacheService.del(cacheService.KEYS.MESSAGES_CONVERSATION(msg.conversationId.toString()))
                 : Promise.resolve(),
@@ -115,7 +135,7 @@ export const editMessage = async (req, res) => {
 
         // Invalidate relevant caches
         await Promise.all([
-            cacheService.del(cacheService.KEYS.MESSAGES_ALL),
+            cacheService.invalidatePrefix(cacheService.KEYS.MESSAGES_ALL),
             updatedMessage?.conversationId
                 ? cacheService.del(cacheService.KEYS.MESSAGES_CONVERSATION(updatedMessage.conversationId.toString()))
                 : Promise.resolve(),

@@ -1,24 +1,48 @@
-import { body, validationResult  } from "express-validator";
+import { body, param } from "express-validator";
+
 export const sendMessageValidation = [
-    body("content")
+    body("conversationId")
         .notEmpty()
-        .withMessage("Message content is required")
+        .withMessage("Conversation ID is required")
+        .isMongoId()
+        .withMessage("Conversation ID must be a valid Mongo ID"),
+    
+    body("senderId")
+        .notEmpty()
+        .withMessage("Sender ID is required")
+        .isMongoId()
+        .withMessage("Sender ID must be a valid Mongo ID"),
+    
+    body("content")
+        .optional()
         .isLength({ max: 500 })
         .withMessage("Message content cannot exceed 500 characters"),
-    body("recipientId")
-        .notEmpty()
-        .withMessage("Recipient ID is required")
+    
+    body("type")
+        .optional()
+        .isIn(["text", "image", "video", "audio", "document"])
+        .withMessage("Invalid message type"),
+        
+    body("receiverId")
+        .optional()
+        .isMongoId()
+        .withMessage("Receiver ID must be a valid Mongo ID")
 ];
+
 export const updateMessageValidation = [
+    param("id")
+        .isMongoId()
+        .withMessage("Invalid Message ID parameter"),
     body("content")
         .notEmpty()
         .withMessage("Message content is required")
         .isLength({ max: 500 })
-        .withMessage("Message content cannot exceed 500 characters"),
+        .withMessage("Message content cannot exceed 500 characters")
 ];
 
 export const deleteMessageValidation = [
-    body("messageId")
-        .notEmpty()
-        .withMessage("Message ID is required")
+    param("id")
+        .isMongoId()
+        .withMessage("Invalid Message ID parameter")
 ];
+
