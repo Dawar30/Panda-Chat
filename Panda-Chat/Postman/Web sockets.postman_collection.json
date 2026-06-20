@@ -1,0 +1,454 @@
+{
+  "info": {
+    "_postman_id": "fae71c4c-28ea-4fc7-b831-34a2420dd788",
+    "name": "Web sockets",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "44401583",
+    "_collection_link": "https://go.postman.co/collection/44401583-fae71c4c-28ea-4fc7-b831-34a2420dd788?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Sign Up",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"test user\",\n    \"email\": \"ahma@gmail.com\",\n    \"password\": \"Test@1234567\",\n    \"role\": \"user\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/signup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user",
+                "signup"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Sign Up",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"test user\",\n    \"email\": \"ahma@gmail.com\",\n    \"password\": \"Test@1234567\",\n    \"role\": \"user\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/user/signup",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "user",
+                    "signup"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "81"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"51-6gb3C3tWN6n65qXhhi0fYnIpx08\""
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 06 Jun 2026 15:15:43 GMT"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"success\": true,\n    \"message\": \"successfuly created user\",\n    \"data\": {\n        \"name\": \"test user\"\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "log in",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"email\": \"ahma@gmail.com\",\r\n    // \"email\": \"test@example.com\",\r\n    \"password\": \"Test@1234567\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user",
+                "logout"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Messages",
+      "item": [
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "sender",
+                  "value": "697c5304ab7a43f449a6dacb",
+                  "type": "text",
+                  "uuid": "35a2feae-987f-433d-a950-0e1b09cff515"
+                },
+                {
+                  "key": "receiver",
+                  "value": "6989bbcf607ab2223a19ad18",
+                  "type": "text",
+                  "uuid": "a7b50b40-1683-4fdc-a33d-eeb84e25c433"
+                },
+                {
+                  "key": "message",
+                  "value": "This is a new message!",
+                  "type": "text",
+                  "uuid": "007adf51-6d05-427c-8f71-f9a32b25d8b7"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "uuid": "2867e6a6-254f-4bdf-bf90-eff030b0f7d4",
+                  "src": "/C:/Users/Lenovo/OneDrive/Pictures/images (1).jpeg"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/message/send",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "message",
+                "send"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Message",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/message/get",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "message",
+                "get"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "update message",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/message/edit/::id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "message",
+                "edit",
+                "::id"
+              ],
+              "variable": [
+                {
+                  "key": ":id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "delete message",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/message/delete/::id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "message",
+                "delete",
+                "::id"
+              ],
+              "variable": [
+                {
+                  "key": ":id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get All users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user",
+                "all"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Groups",
+      "item": [
+        {
+          "name": "create",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\" : \"Test Group\",\r\n    \"Description\" : \"uhfdhfdf jfjdshifd \",\r\n    \"members\": [\r\n        \"6989bbcf607ab2223a19ad18\",\r\n        \"697ca59be83bf1241bbc4ec5\"\r\n    ],\r\n    \"admins\" : []\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/group/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "group",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\" : \"Test Group\",\r\n    \"Description\" : \"uhfdhfdf jfjdshifd \",\r\n    \"members\": [\r\n        \"6989bbcf607ab2223a19ad18\",\r\n        \"697ca59be83bf1241bbc4ec5\"\r\n    ],\r\n    \"admins\" : []\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/group/::id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "group",
+                "::id"
+              ],
+              "variable": [
+                {
+                  "key": ":id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/group/::id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "group",
+                "::id"
+              ],
+              "variable": [
+                {
+                  "key": ":id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Groups",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/group/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "group",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get By id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/group/::id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "group",
+                "::id"
+              ],
+              "variable": [
+                {
+                  "key": ":id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": ""
+    }
+  ]
+}
