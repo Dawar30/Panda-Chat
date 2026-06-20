@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect,useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { login, signup } from "@/services/authService";
@@ -13,19 +13,23 @@ const Login = () => {
     handleSubmit,
     reset,
     clearErrors,
+    setValue,
     formState: { errors },
   } = useForm({
     defaultValues: {
-      name: "",
+      username: "",
+      fullName: "",
       email: "",
       password: "",
-      role: "user",
+      avatar: "",
     },
   });
   const [isSignup, setIsSignup] = useState(false);
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [avatarPreview, setAvatarPreview] = useState("");
+  const avatarInputRef = useRef(null);
 
   // useEffect(() => {
   //   if (isAuthenticated()) {
@@ -41,6 +45,23 @@ const Login = () => {
     setShowPass(!showPass);
   };
 
+  const handleAvatarClick = () => {
+    avatarInputRef.current?.click();
+  };
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setAvatarPreview(e.target.result);
+        // Store the base64 image or file data in the form
+        setValue("avatar", e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const onsubmit = async (data) => {
     setLoading(true);
     setMessage("");
@@ -48,15 +69,16 @@ const Login = () => {
     try {
       if (isSignup) {
         await signup({
-          name: data.name,
+          username: data.username,
+          fullName: data.fullName,
           email: data.email,
           password: data.password,
-          roles: [data.role],
+          avatar: data.avatar,
         });
 
         setMessage("Account created. Please log in.");
         setIsSignup(false);
-        reset({ name: "", email: data.email, password: "", role: "user" });
+        reset({ username: "", fullName: "", email: data.email, password: "", avatar: "" });
         return;
       }
 
@@ -87,8 +109,8 @@ const Login = () => {
         }`}
       >
        
-        <div className="flex flex-col items-center w-125 h-125">
-          <h1 className="text-3xl font-bold my-10">
+        <div className="flex flex-col justify-center items-center w-125 h-125">
+          <h1 className="text-3xl font-bold my-4">
             {isSignup ? "Create Account" : "Welcome Back !!"}
           </h1>
 
@@ -99,21 +121,79 @@ const Login = () => {
           ) : null}
 
           {isSignup && (
-            <div className="relative w-90 mb-6">
-              <input
-                type="text"
-                placeholder="Full name"
-                className="w-full bg-gray-50 border border-gray-300 text-gray-900 text-md rounded-[50px] focus:ring-blue-500 focus:border-blue-500 block ps-5 p-3"
-                {...register("name", {
-                  required: "Name is required",
-                  minLength: {
-                    value: 2,
-                    message: "Name must be at least 2 characters",
-                  },
-                })}
-              />
-              {errors.name && <span className="absolute mt-1 text-red-600">{errors.name.message}</span>}
-            </div>
+            <>
+              {/* Avatar Circle */}
+              <div className="flex flex-col items-center mb-6">
+                <div
+                  onClick={handleAvatarClick}
+                  className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors relative overflow-hidden"
+                >
+                  {avatarPreview ? (
+                    <img
+                      src={avatarPreview}
+                      alt="Avatar preview"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <svg
+                      className="w-8 h-8 text-gray-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                      />
+                    </svg>
+                  )}
+                </div>
+                <p className="mt-2 text-xs text-gray-500">Click to add avatar</p>
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                  className="hidden"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 w-90 mb-6">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Username"
+                    className="w-full bg-gray-50 border border-gray-300 text-gray-900 text-md rounded-[50px] focus:ring-blue-500 focus:border-blue-500 block ps-5 p-3"
+                    {...register("username", {
+                      required: "Username is required",
+                      minLength: {
+                        value: 3,
+                        message: "Username must be at least 3 characters",
+                      },
+                    })}
+                  />
+                  {errors.username && <span className="absolute mt-1 text-red-600 text-xs">{errors.username.message}</span>}
+                </div>
+                
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Full Name"
+                    className="w-full bg-gray-50 border border-gray-300 text-gray-900 text-md rounded-[50px] focus:ring-blue-500 focus:border-blue-500 block ps-5 p-3"
+                    {...register("fullName", {
+                      required: "Full Name is required",
+                      minLength: {
+                        value: 2,
+                        message: "Full Name must be at least 2 characters",
+                      },
+                    })}
+                  />
+                  {errors.fullName && <span className="absolute mt-1 text-red-600 text-xs">{errors.fullName.message}</span>}
+                </div>
+              </div>
+            </>
           )}
 
           {/* Email Input */}
@@ -200,40 +280,7 @@ const Login = () => {
             </span>{" "}
           </div>
 
-          {/* Role Field - Only show during signup */}
-          {isSignup && (
-            <div className="relative w-90 mt-6">
-              <div className="absolute mt-3.5 inset-s-0 flex items-center ps-5 pointer-events-none">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5 text-gray-500"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                  />
-                </svg>
-              </div>
-              <select
-                id="input-group-1"
-                className="w-full bg-gray-50 border border-gray-300 text-gray-400 text-md rounded-[50px] focus:ring-blue-500 focus:border-blue-500 block ps-13 p-3 appearance-none cursor-pointer"
-                {...register("role", {
-                  required: "Role is required"
-                })}
-              >
-                <option value="">Select Role</option>
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
-              </select>
-              {errors.role && <span className="absolute mt-1 text-red-600">{errors.role.message}</span>}
-            </div>
-          )}
-
+          
           {/* Button */}
           <button disabled={loading} className="mt-10 w-90 text-white bg-blue-primary hover:bg-blue-400 focus:ring-4 focus:ring-blue-300 font-medium rounded-[50px] text-sm px-5 py-3.5 disabled:opacity-70 disabled:cursor-not-allowed">
             {loading ? "Please wait..." : isSignup ? "Sign Up" : "Sign In"}
