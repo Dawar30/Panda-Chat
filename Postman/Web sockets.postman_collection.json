@@ -17,7 +17,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"test user\",\n    \"email\": \"ahma@gmail.com\",\n    \"password\": \"Test@1234567\",\n    \"role\": \"user\"\n}",
+              "raw": "{\n    \"username\" : \"Ahmad Test\",\n    \"fullName\": \"test user\",\n    \"email\": \"ahma@gmail.com\",\n    \"password\": \"Test@1234567\",\n    \"avatar\" : \"kjsj\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -106,7 +106,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"email\": \"ahma@gmail.com\",\r\n    // \"email\": \"test@example.com\",\r\n    \"password\": \"Test@1234567\"\r\n}",
+              "raw": "{\r\n    \"email\": \"test@example.com\",\r\n    // \"email\": \"ahmad@example.com\",\r\n    \"password\": \"Test@1234567\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -299,7 +299,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"name\" : \"Test Group\",\r\n    \"Description\" : \"uhfdhfdf jfjdshifd \",\r\n    \"members\": [\r\n        \"6989bbcf607ab2223a19ad18\",\r\n        \"697ca59be83bf1241bbc4ec5\"\r\n    ],\r\n    \"admins\" : []\r\n}",
+              "raw": "{\r\n    \"name\" : \"Test Group\",\r\n    \"Description\" : \"uhfdhfdf jfjdshifd \",\r\n    \"avatar\" : \"him\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -326,7 +326,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"name\" : \"Test Group\",\r\n    \"Description\" : \"uhfdhfdf jfjdshifd \",\r\n    \"members\": [\r\n        \"6989bbcf607ab2223a19ad18\",\r\n        \"697ca59be83bf1241bbc4ec5\"\r\n    ],\r\n    \"admins\" : []\r\n}",
+              "raw": "{\r\n    \"name\": \"Test Group\",\r\n    \"Description\": \"uhfdhfdf jfjdshifd \",\r\n    \"avatar\": \"him\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"

@@ -131,14 +131,14 @@ export const socketRateLimit = async (userId, category, windowSeconds, maxReques
 // ─── Pre-configured Middleware ──────────────────────────────────
 
 /** Rate limit: 5 login attempts per 5 minutes per IP+email */
-export const loginLimiter = rateLimitMiddleware("login", 300, 5, (req) => {
+export const loginLimiter = rateLimitMiddleware("login", 300, 15, (req) => {
   const email = req.body?.email || "unknown";
   const ip = req.ip || req.connection.remoteAddress || "unknown";
   return `${ip}:${email}`;
 });
 
 /** Rate limit: 3 signups per hour per IP */
-export const signupLimiter = rateLimitMiddleware("signup", 3600, 3);
+export const signupLimiter = rateLimitMiddleware("signup", 3600, 10);
 
 /** Rate limit: 100 API requests per minute per IP */
 export const apiLimiter = rateLimitMiddleware("api", 60, 100);
