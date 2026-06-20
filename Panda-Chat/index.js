@@ -16,7 +16,23 @@ import { apiLimiter } from "./src/middleware/rateLimiter.js"
 DBconnection()
 
 const app = express()
+// add check to handle 5000,3000 ports
 const port = process.env.PORT || 5000
+
+if (port === 5000 || port === 3000) {
+  console.log(`App is running on multiple ports ${port}`);
+}
+
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "http://localhost:3000");
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  next();
+});
 
 app.use(express.json())
 app.use(cookieParser())
