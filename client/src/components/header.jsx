@@ -1,11 +1,17 @@
 "use client";
-
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { logout } from "@/services/authService";
 import { clearAuthToken } from "@/services/tokenStorage";
 
 export default function Header() {
+    const [name] = useState(() => {
+  if (typeof window !== "undefined") {
+   return localStorage.getItem("panda-chat-name") || "User";
+  }
+  return "User";
+});
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -31,15 +37,17 @@ export default function Header() {
             />
             <h1 className="text-xl font-bold text-gray-900">Chat App</h1>
           </div>
-
+            <div className="flex gap-4 items-center justify-center">
+                <p>{name}</p>
           {/* Logout Button */}
           <button
             type="button"
             onClick={handleLogout}
-            className="rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-700"
+            className="rounded-full hover:cursor-pointer bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-700"
           >
             Logout
           </button>
+            </div>
         </div>
       </div>
     </header>
