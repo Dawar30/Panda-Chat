@@ -89,7 +89,7 @@ const Login = () => {
       });
 
       if (response?.token) {
-        setAuthToken(response.token);
+        setAuthToken(response.token ,response.user);
       }
 
       router.replace("/chat");
