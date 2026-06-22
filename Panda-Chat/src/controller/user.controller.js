@@ -58,7 +58,9 @@ export const logIn = async (req, res) => {
             userAgent: req.headers["user-agent"] || "unknown",
         });
 
-        res.status(200).json({ success: true, token, user: {name: checkUser[0].name, email: checkUser[0].email} })
+        const userData = checkUser[0].toObject();
+        delete userData.password;
+        res.status(200).json({ success: true, token, user: userData});
     } catch (error) {
         res.status(500).json({success: false, message :"Internal server error", error: error.message})
         console.log(error)
