@@ -88,7 +88,7 @@ export const invalidate = async (pattern) => {
   if (!isRedisReady()) return 0;
 
   try {
-    let cursor = 0;
+    let cursor = "0";
     let totalDeleted = 0;
 
     do {
@@ -97,13 +97,13 @@ export const invalidate = async (pattern) => {
         COUNT: 100,
       });
 
-      cursor = result.cursor;
+      cursor = String(result.cursor);
 
       if (result.keys.length > 0) {
         await redisClient.del(result.keys);
         totalDeleted += result.keys.length;
       }
-    } while (cursor !== 0);
+    } while (cursor !== "0");
 
     return totalDeleted;
   } catch (error) {

@@ -7,6 +7,7 @@ import groupRoutes from "./src/routes/group.routes.js"
 import conversationRoutes from "./src/routes/conversation.routes.js"
 import conversationMemberRoutes from "./src/routes/conversationMember.routes.js"
 import groupMemberRoutes from "./src/routes/groupMember.routes.js"
+import contactRoutes from "./src/routes/contact.routes.js"
 import cookieParser from "cookie-parser"
 import { initSockets } from "./src/socket/index.js"
 import { gracefulShutdown as redisShutdown } from "./config/redis.js"
@@ -58,6 +59,7 @@ app.use("/api/group", groupRoutes)
 app.use("/api/conversation", conversationRoutes)
 app.use("/api/conversation-member", conversationMemberRoutes)
 app.use("/api/group-member", groupMemberRoutes)
+app.use("/api/contact", contactRoutes)
 
 // ─── Graceful Shutdown ──────────────────────────────────────────
 const shutdown = async (signal) => {

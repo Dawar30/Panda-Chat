@@ -17,7 +17,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"test user\",\n    \"email\": \"ahma@gmail.com\",\n    \"password\": \"Test@1234567\",\n    \"role\": \"user\"\n}",
+              "raw": "{\n    \"username\" : \"ahmad\",\n    \"fullName\": \"Ahmad Mian\",\n    \"email\": \"ahmadN@gmail.com\",\n    \"password\": \"Test@1234567\",\n    \"avatar\" : \"kjsj\",\n    \"phoneNumber\" : \"+923119876109\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -106,7 +106,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"email\": \"ahma@gmail.com\",\r\n    // \"email\": \"test@example.com\",\r\n    \"password\": \"Test@1234567\"\r\n}",
+              "raw": "{\r\n    // \"email\": \"test@example.com\",\r\n    \"email\": \"ahaN@gmail.com\",\r\n    \"password\": \"Test@1234567\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -299,7 +299,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"name\" : \"Test Group\",\r\n    \"Description\" : \"uhfdhfdf jfjdshifd \",\r\n    \"members\": [\r\n        \"6989bbcf607ab2223a19ad18\",\r\n        \"697ca59be83bf1241bbc4ec5\"\r\n    ],\r\n    \"admins\" : []\r\n}",
+              "raw": "{\r\n    \"name\" : \"Test Group\",\r\n    \"Description\" : \"uhfdhfdf jfjdshifd \",\r\n    \"avatar\" : \"him\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -326,7 +326,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"name\" : \"Test Group\",\r\n    \"Description\" : \"uhfdhfdf jfjdshifd \",\r\n    \"members\": [\r\n        \"6989bbcf607ab2223a19ad18\",\r\n        \"697ca59be83bf1241bbc4ec5\"\r\n    ],\r\n    \"admins\" : []\r\n}",
+              "raw": "{\r\n    \"name\": \"Test Group\",\r\n    \"Description\": \"uhfdhfdf jfjdshifd \",\r\n    \"avatar\": \"him\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -406,6 +406,168 @@
               ],
               "path": [
                 "group",
+                "::id"
+              ],
+              "variable": [
+                {
+                  "key": ":id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Contacts",
+      "item": [
+        {
+          "name": "Add Contacts",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"contactId\" : \"6a392b27c584eb03de372006\",\r\n    \"customName\" : \"Mian G\"     \r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/contact/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "contact",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Contacts",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"contactId\" : \"\",\r\n    \"customName\" : \"Asad Ali\"     \r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/contact/::id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "contact",
+                "::id"
+              ],
+              "variable": [
+                {
+                  "key": ":id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Contacts",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"customName\" : \"Asad Ali\"     \r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/contact/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "contact",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Contacts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/contact/?search=te",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "contact",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": null,
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": null,
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "te"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get By Id",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"contactId\" : \"\",\r\n    \"customName\" : \"Asad Ali\"     \r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/contact/::id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "contact",
                 "::id"
               ],
               "variable": [

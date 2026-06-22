@@ -7,7 +7,7 @@ import * as cacheService from "../services/cacheService.js";
 
 export const signUp = async (req, res) => {
     try {
-        const { username, fullName, email, password, avatar } = req.body;
+        const { username, fullName, email, password, avatar, phoneNumber, roles } = req.body;
 
         const checkUser = await user.find({ email });
         if (checkUser.length != 0) {
@@ -21,7 +21,8 @@ export const signUp = async (req, res) => {
             email,
             password: hashedPassword,
             avatar,
-            roles: ["user"],
+            phoneNumber: phoneNumber || null,
+            roles: roles || ["user"],
             lastSeen: new Date()
         })
 

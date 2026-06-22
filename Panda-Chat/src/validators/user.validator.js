@@ -1,5 +1,4 @@
 import { body, validationResult } from 'express-validator';
-
 // Validation rules for user sign up
 export const signUpValidation = [
     body('username')
@@ -10,7 +9,6 @@ export const signUpValidation = [
         .withMessage('Username must be between 3 and 30 characters')
         .matches(/^[a-zA-Z0-9_]+$/)
         .withMessage('Username can only contain letters, numbers, and underscores'),
-
     body('fullName')
         .trim()
         .notEmpty()
@@ -35,14 +33,32 @@ export const signUpValidation = [
         .withMessage('Password must be at least 6 characters long')
         .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
         .withMessage('Password must contain at least one uppercase letter, one lowercase letter, and one number'),
-
+    body('phoneNumber')
+        .optional({ nullable: true })
+        .trim()
+        .isMobilePhone()
+        .withMessage('Please provide a valid phone number'),
     body('avatar')
-        .optional()
+        .optional({ nullable: true })
         .trim()
         .isString()
-        .withMessage('Avatar must be a string')
+        .withMessage('Avatar must be a string'),
+    body('isContact')
+        .optional()
+        .isBoolean()
+        .withMessage('isContact must be a boolean value'),
+    body('roles')
+        .optional()
+        .isArray()
+        .withMessage('Roles must be an array of strings')
+        .custom((value) => {
+            const validRoles = ["user", "admin", "super-admin"];
+            if (!value.every(role => validRoles.includes(role))) {
+                throw new Error('Invalid role specified');
+            }
+            return true;
+        })
 ];
-
 // Validation rules for user login
 export const logInValidation = [
     body('email')
@@ -57,7 +73,6 @@ export const logInValidation = [
         .notEmpty()
         .withMessage('Password is required')
 ];
-
 // Middleware to handle validation errors
 export const handleValidationErrors = (req, res, next) => {
     const errors = validationResult(req);
@@ -73,4 +88,3 @@ export const handleValidationErrors = (req, res, next) => {
     }
     next();
 };
-
