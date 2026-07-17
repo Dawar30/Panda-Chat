@@ -1,7 +1,7 @@
 import React from 'react'
 import Login from '../../../components/auth/login'
 
-export const login = () => {
+export const LoginPage = () => {
   return (
     <div>
       <Login />
@@ -9,4 +9,4 @@ export const login = () => {
   )
 }
 
-export default login
+export default LoginPage

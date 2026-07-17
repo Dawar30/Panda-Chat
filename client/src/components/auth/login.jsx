@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { login, signup } from "@/services/authService";
 import { isAuthenticated, setAuthToken } from "@/services/tokenStorage";
-
+import Socket from "@/components/socket/socket";
+import { emitUserOnline } from "@/components/socket/socketEmitters";
 const Login = () => {
   const router = useRouter();
   const {
@@ -22,6 +23,7 @@ const Login = () => {
       email: "",
       password: "",
       avatar: "",
+      contactNumber: "",
     },
   });
   const [isSignup, setIsSignup] = useState(false);
@@ -75,11 +77,12 @@ const Login = () => {
           email: data.email,
           password: data.password,
           avatar: data.avatar,
+          phoneNumber: data.contactNumber,
         });
 
         setMessage("Account created. Please log in.");
         setIsSignup(false);
-        reset({ username: "", fullName: "", email: data.email, password: "", avatar: "" });
+        reset({ username: "", fullName: "", email: data.email, password: "", avatar: "", contactNumber: "" });
         return;
       }
 
@@ -89,9 +92,15 @@ const Login = () => {
       });
 
       if (response?.token) {
-        setAuthToken(response.token ,response.user);
-      }
+        setAuthToken(response.token, response.user);
 
+        Socket.auth = { token: response.token, userId: response.user._id };
+        Socket.connect();
+        console.log("socket connected", Socket.auth);
+        
+        // Emit user online status
+        emitUserOnline(response.user._id);
+      }
       router.replace("/chat");
     } catch (error) {
       const apiMessage = error?.message || error?.errors?.[0]?.message || "Something went wrong";
@@ -192,6 +201,23 @@ const Login = () => {
                     />
                     {errors.fullName && <span className="absolute mt-1 text-red-600 text-xs">{errors.fullName.message}</span>}
                   </div>
+                </div>
+
+                {/* Contact Number Input */}
+                <div className="relative w-90 mb-6">
+                  <input
+                    type="tel"
+                    placeholder="Contact Number"
+                    className="w-full bg-gray-50 border border-gray-300 text-gray-900 text-md rounded-[50px] focus:ring-blue-500 focus:border-blue-500 block ps-5 p-3"
+                    {...register("contactNumber", {
+                      required: "Contact number is required",
+                      pattern: {
+                        value: /^[0-9]{11}$/,
+                        message: "Contact number must be 11 digits",
+                      },
+                    })}
+                  />
+                  {errors.contactNumber && <span className="absolute mt-1 text-red-600 text-xs">{errors.contactNumber.message}</span>}
                 </div>
               </>
             )}
@@ -315,8 +341,8 @@ const Login = () => {
 
         {/* Image / Background Container */}
         <div
-          className={`relative flex-1 flex items-center justify-center transition-all duration-700 ease-in-out ${isSignup ? "-translate-x-full" : "translate-x-0"
-            } overflow-hidden`}
+          className={`hidden lg:flex relative flex-1 flex items-center justify-center transition-all duration-700 ease-in-out ${isSignup ? "-translate-x-full" : "translate-x-0"
+            } overflow-hidden `}
         >
           <div className="absolute w-75 rounded-t-[300px] h-128.75 bg-blue-primary top-31.5">
             <div className="absolute h-122.5 w-100">
