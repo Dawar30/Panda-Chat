@@ -13,21 +13,17 @@ export default function AuthInitializer({ children }) {
     if (pathname === "/login") {
       return;
     }
-
     const token = getAuthToken();
-
     // If no token exists, redirect to login
     if (!token) {
       logout();
       return;
     }
-
     // If token is expired, logout
     if (isTokenExpired(token)) {
       logout();
       return;
     }
-
     // Token is valid, allow app to continue normally
   }, [pathname]);
 

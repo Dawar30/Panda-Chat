@@ -18,13 +18,28 @@ export default function ChatSection({
   fileInputRef, 
   showMobileChat, 
   setShowMobileChat,
-  currentUserId 
+  currentUserId,
+  presence
 }) {
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, activeChat]);
+
+  if (!activeChat) {
+    return (
+      <section
+        className={`${showMobileChat ? "flex" : "hidden md:flex"} h-full flex-col items-center justify-center rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden`}
+      >
+        <Image src="/logo.avif" alt="Chat App" width={72} height={72} priority />
+        <h1 className="mt-5 text-2xl font-semibold text-primary-black">Chat App</h1>
+        <p className="mt-2 max-w-sm px-6 text-center text-sm text-gray-500">
+          Select a conversation to start messaging.
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section
@@ -45,7 +60,7 @@ export default function ChatSection({
               {activeChat?.name || activeChat?.participants?.[0]?.name || "User"}
             </p>
             <p className="text-sm font-regular text-primary">
-              {activeChat?.type === "group" ? "Group Chat" : "Direct Message"}
+              {activeChat?.type === "group" ? "Group Chat" : (presence?.isOnline ? "Online" : presence?.lastSeen ? `Last seen ${new Date(presence.lastSeen).toLocaleString()}` : "")}
             </p>
           </div>
         </div>

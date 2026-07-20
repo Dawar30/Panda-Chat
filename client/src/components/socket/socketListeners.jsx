@@ -20,6 +20,21 @@ export const onMessageNew = (callback) => {
   Socket.on("message:new", callback);
 };
 
-export const offMessageNew = () => {
-  Socket.off("message:new");
+export const offMessageNew = (callback) => {
+  Socket.off("message:new", callback);
+};
+export const onUsersOnline = (callback) => {
+  Socket.on("users:online", callback);
+};
+
+export const offUsersOnline = (callback) => {
+  Socket.off("users:online", callback);
+};
+
+export const onUserStatus = (callback) => {
+  Socket.on("user:status", callback);
+};
+
+export const offUserStatus = (callback) => {
+  Socket.off("user:status", callback);
 };

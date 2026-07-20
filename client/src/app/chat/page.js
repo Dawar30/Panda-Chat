@@ -1,140 +1,46 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import Header from "@/components/header";
 import AsideItems from "@/components/chat/asideitems";
 import ChatSection from "@/components/chat/chatSection";
 import { getUser } from "@/utils/tokenStorage";
-import {
-  emitGetConversations,
-  emitGetMessages,
-  emitSendMessage,
-} from "@/components/socket/socketEmitters";
-import {
-  onConversationsGet,
-  offConversationsGet,
-  onMessagesGet,
-  offMessagesGet,
-  onMessageNew,
-  offMessageNew,
-} from "@/components/socket/socketListeners";
+import { emitSendMessage } from "@/components/socket/socketEmitters";
+import { useSocketConnection } from "@/hooks/useSocketConnection";
+import { useConversations } from "@/hooks/useConversations";
+import { useMessages } from "@/hooks/useMessages";
+import { usePresence } from "@/hooks/usePresence";
+import { formatMessageTime } from "@/utils/chatHelpers";
 
 export default function ChatPage() {
-  const [conversations, setConversations] = useState([]);
   const [activeChat, setActiveChat] = useState(null);
-  const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
   const [showMobileChat, setShowMobileChat] = useState(false);
   const fileInputRef = useRef(null);
-  const [currentUserId, setCurrentUserId] = useState(null);
+  const user = getUser();
+  const currentUserId = user?._id;
+
+  useSocketConnection(currentUserId);
+  const { conversations, isLoading: isLoadingConversations } = useConversations(currentUserId);
+  const { messages, setMessages } = useMessages(activeChat);
+  const presence = usePresence(activeChat, currentUserId);
 
   // Handle new chat from header modal
-  const handleNewChat = (user) => {
-    const currentUser = getUser();
-
+  const handleNewChat = (selectedUser) => {
     // Create temporary conversation object for new chat
     const newChat = {
-      id: `${user._id}`,
-      name: user.name || user.username,
-      participants: [currentUser?._id, user._id],
+      id: `${selectedUser._id}`,
+      name: selectedUser.name || selectedUser.username,
+      participants: [currentUserId, selectedUser._id],
       type: "private",
       isNew: true,
-      receiverId: user._id,
+      receiverId: selectedUser._id,
     };
 
     setActiveChat(newChat);
     setMessages([]);
     setShowMobileChat(true);
   };
-
-  useEffect(() => {
-    try {
-      // Get user from token storage
-      const user = getUser();
-      if (user?._id) {
-        setCurrentUserId(user._id);
-        // Emit conversations:get
-       emitGetConversations(user._id, (response) => {
-  if (response?.success) {
-    setConversations(response.conversations);
-  } else {
-    console.error("Failed to load conversations", response);
-  }
-});
-      }
-
-      // // Listen for conversations
-      // onConversationsGet((data) => {
-      //   setConversations(data);
-      // });
-
-      // Listen for messages
-      onMessagesGet((data) => {
-        setMessages(data);
-      });
-
-      // Listen for new messages
-      onMessageNew((message) => {
-        console.log("New message received:", message);
-        // Transform backend message to frontend format
-        const transformedMessage = {
-          _id: message._id,
-          id: message._id,
-          senderId: message.senderId,
-          sender: message.senderId,
-          text: message.content, // Map content to text
-          content: message.content,
-          time: new Date(message.createdAt).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }), // Format time
-          createdAt: message.createdAt,
-          type: message.type,
-          file: message.file,
-          edited: message.edited,
-          deletedForEveryone: message.deletedForEveryone,
-          parentMessageId: message.parentMessageId,
-          conversationId: message.conversationId,
-        };
-        setMessages((prev) => {
-          if (prev.some((m) => m._id === message._id)) {
-            return prev;
-          }
-          return [...prev, transformedMessage];
-        });
-      });
-    } catch (error) {
-      console.error("Error in socket setup:", error);
-    }
-
-    return () => {
-      // offConversationsGet();
-      offMessagesGet();
-      offMessageNew();
-    };
-  }, []);
-
-  useEffect(() => {
-    console.log("Messages state:", messages);
-  }, [messages]);
-
-  // Auto-select first conversation
-  useEffect(() => {
-    try {
-      if (conversations.length > 0 && !activeChat) {
-        setActiveChat(conversations[0]);
-      }
-    } catch (error) {
-      console.error("Error in auto-select first conversation:", error);
-    }
-  }, [conversations, activeChat]);
-
-  // Load messages when active chat changes
-  useEffect(() => {
-    if (activeChat?.id) {
-      emitGetMessages(activeChat.id);
-    }
-  }, [activeChat]);
 
   const handleThreadClick = (threadId) => {
     const selectedConversation = conversations.find((c) => c.id === threadId);
@@ -145,27 +51,16 @@ export default function ChatPage() {
   };
 
   const handleSendMessage = () => {
-    // Fallback to get current user ID if not set
-    const userId = currentUserId || getUser()?._id;
-    console.log("handleSendMessage called", {
-      inputMessage,
-      activeChat,
-      currentUserId,
-      userId,
-    });
+    const userId = currentUserId;
 
     if (inputMessage.trim() && activeChat) {
-      // Get receiverId from activeChat
       let receiverId;
       if (activeChat.isNew && activeChat.receiverId) {
-        // New chat - receiverId is directly available
         receiverId = activeChat.receiverId;
-      } else if (activeChat.participants) {
-        // Existing conversation - filter out current user
-        receiverId = activeChat.participants.find((p) => p !== userId);
+      } else if (activeChat.otherParticipant?._id) {
+        receiverId = activeChat.otherParticipant._id;
       }
 
-      console.log("Receiver ID:", receiverId);
       if (receiverId) {
         const senderMessage = {
           _id: `temp-${Date.now()}`,
@@ -174,21 +69,15 @@ export default function ChatPage() {
           sender: userId,
           text: inputMessage.trim(),
           content: inputMessage.trim(),
-          time: new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
+          time: formatMessageTime(new Date().toISOString()),
           createdAt: new Date().toISOString(),
           type: "text",
           isTemp: true,
         };
         setMessages((prev) => [...prev, senderMessage]);
 
-        // Emit via socket
         emitSendMessage(receiverId, inputMessage.trim());
         setInputMessage("");
-      } else {
-        console.error("No receiverId found");
       }
     }
   };
@@ -226,10 +115,7 @@ export default function ChatPage() {
       const newMessage = {
         id: `msg-${Date.now()}`,
         sender: "me",
-        time: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
+        time: formatMessageTime(new Date().toISOString()),
         image: e.target.result,
         fileName: file.name,
       };
@@ -242,10 +128,7 @@ export default function ChatPage() {
     const newMessage = {
       id: `msg-${Date.now()}`,
       sender: "me",
-      time: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
+      time: formatMessageTime(new Date().toISOString()),
       video: URL.createObjectURL(file),
       fileName: file.name,
     };
@@ -256,10 +139,7 @@ export default function ChatPage() {
     const newMessage = {
       id: `msg-${Date.now()}`,
       sender: "me",
-      time: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
+      time: formatMessageTime(new Date().toISOString()),
       document: file.name,
       fileSize: (file.size / 1024 / 1024).toFixed(2) + " MB",
     };
@@ -277,6 +157,7 @@ export default function ChatPage() {
               activeChat={activeChat}
               handleThreadClick={handleThreadClick}
               showMobileChat={showMobileChat}
+              isLoading={isLoadingConversations}
             />
             <ChatSection
               activeChat={activeChat}
@@ -291,6 +172,7 @@ export default function ChatPage() {
               showMobileChat={showMobileChat}
               setShowMobileChat={setShowMobileChat}
               currentUserId={currentUserId}
+              presence={presence}
             />
           </div>
         </div>

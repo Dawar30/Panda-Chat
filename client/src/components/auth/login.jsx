@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { login, signup } from "@/services/authService";
+import { login as loginApi, signup } from "@/services/authService";
 import { isAuthenticated, setAuthToken } from "@/utils/tokenStorage";
-import Socket from "@/components/socket/socket";
-import { emitUserOnline } from "@/components/socket/socketEmitters";
+import Image from "next/image";
+
 const Login = () => {
   const router = useRouter();
   const {
@@ -86,20 +86,13 @@ const Login = () => {
         return;
       }
 
-      const response = await login({
+      const response = await loginApi({
         email: data.email,
         password: data.password,
       });
 
       if (response?.token) {
         setAuthToken(response.token, response.user);
-
-        Socket.auth = { token: response.token, userId: response.user._id };
-        console.log("About to connect socket with auth:", Socket.auth);
-        Socket.connect();
-        
-        // Emit user online status
-        emitUserOnline(response.user._id);
       }
       router.replace("/chat");
     } catch (error) {
@@ -138,10 +131,12 @@ const Login = () => {
                     className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors relative overflow-hidden"
                   >
                     {avatarPreview ? (
-                      <img
+                      <Image
                         src={avatarPreview}
                         alt="Avatar preview"
                         className="w-full h-full object-cover"
+                        width={80}
+                        height={80}
                       />
                     ) : (
                       <svg
@@ -295,10 +290,12 @@ const Login = () => {
                 })}
               />
               {errors.password && <span className="absolute mt-1 text-red-600">{errors.password.message}</span>}
-              <img
+              <Image
                 src={showPass ? "/view.png" : "/hide.png"}
                 className="absolute right-4.5 top-3.75 w-4.5 cursor-pointer"
                 alt="eye icon"
+                width={18}
+                height={18}
                 onClick={togglepass}
               />{" "}
               <span className="absolute mt-1 right-2 cursor-pointer">
@@ -341,12 +338,12 @@ const Login = () => {
 
         {/* Image / Background Container */}
         <div
-          className={`hidden lg:flex relative flex-1 flex items-center justify-center transition-all duration-700 ease-in-out ${isSignup ? "-translate-x-full" : "translate-x-0"
+          className={`hidden lg:flex relative flex-1 items-center justify-center transition-all duration-700 ease-in-out ${isSignup ? "-translate-x-full" : "translate-x-0"
             } overflow-hidden `}
         >
           <div className="absolute w-75 rounded-t-[300px] h-128.75 bg-blue-primary top-31.5">
             <div className="absolute h-122.5 w-100">
-              <img
+              <Image
                 src="/image2.png"
                 className={`absolute  w-full h-full object-contain transition-all duration-700 ease-in-out
                  ${isSignup
@@ -354,6 +351,8 @@ const Login = () => {
                     : "rotate-y-180 -left-42.5 -top-15"
                   }`}
                 alt=""
+                width={400}
+                height={400}
               />
             </div>
           </div>
