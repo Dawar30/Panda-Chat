@@ -17,7 +17,8 @@ export default function ChatSection({
   handleFileChange, 
   fileInputRef, 
   showMobileChat, 
-  setShowMobileChat 
+  setShowMobileChat,
+  currentUserId 
 }) {
   const messagesEndRef = useRef(null);
 
@@ -68,23 +69,23 @@ export default function ChatSection({
         </div>
 
         {messages.map((message) => {
-          const isMe = message.sender === "me";
+          const isMe = message.senderId === currentUserId || message.sender === "me";
 
           return (
             <div
-              key={message.id}
+              key={message.id || message._id}
               className={`flex items-end gap-2 ${
                 isMe ? "justify-end" : "justify-start"
               }`}
             >
               {!isMe && (
                 <div className="flex items-start gap-3">
-                  <div className="flex max-w-[75%] flex-col">
+                  <div className="flex max-w-[90%] flex-col">
                     <span className="mb-1 text-sm font-medium text-primary-black">
                       {message.name}
                     </span>
                     <div
-                      className={`rounded-lg px-4 py-3 font-regular text-sm leading-relaxed ${
+                      className={`rounded-lg p-2 font-regular text-sm leading-relaxed ${
                         isMe
                           ? "bg-blue-primary text-primary-black"
                           : "border border-gray-200 bg-lightblue50 text-gray-700"

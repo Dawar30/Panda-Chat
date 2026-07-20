@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { getUser } from "@/services/tokenStorage";
+import { getUser } from "@/utils/tokenStorage";
 
 export default function UsersModal({ isOpen, onClose, onUserSelect, users, loading }) {
   const [searchQuery, setSearchQuery] = useState("");

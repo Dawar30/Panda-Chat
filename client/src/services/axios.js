@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { clearAuthToken, getAuthToken } from './tokenStorage';
+import { clearAuthToken, getAuthToken } from '../utils/tokenStorage';
+import { logout } from '../utils/auth';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -18,9 +19,7 @@ api.interceptors.request.use((config) => {
   const isPublicRequest = publicPaths.some((path) => requestUrl.includes(path));
 
   if (!token && !isPublicRequest) {
-    if (window.location.pathname !== '/login') {
-      window.location.assign('/login');
-    }
+    logout();
     return Promise.reject(new Error('Authentication required'));
   }
 
@@ -39,10 +38,7 @@ api.interceptors.response.use(
     const isPublicRequest = publicPaths.some((path) => requestUrl.includes(path));
 
     if (error.response?.status === 401 && !isPublicRequest && typeof window !== 'undefined') {
-      clearAuthToken();
-      if (window.location.pathname !== '/login') {
-        window.location.assign('/login');
-      }
+      logout();
     }
 
     return Promise.reject(error);

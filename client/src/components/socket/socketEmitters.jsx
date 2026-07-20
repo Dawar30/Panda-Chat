@@ -12,6 +12,9 @@ export const emitGetMessages = (conversationId) => {
   Socket.emit("messages:get", { conversationId });
 };
 
-export const emitSendMessage = (receiverId, text, file = null) => {
-  Socket.emit("message:send", { receiverId, text, file });
+export const emitSendMessage = (receiverId, text, file = null, callback) => {
+  Socket.emit("message:send", { receiverId, text, file }, (res) => {
+    console.log("Message send response:", res);
+    if (callback) callback(res);
+  });
 };

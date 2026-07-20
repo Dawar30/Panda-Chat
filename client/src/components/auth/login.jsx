@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { login, signup } from "@/services/authService";
-import { isAuthenticated, setAuthToken } from "@/services/tokenStorage";
+import { isAuthenticated, setAuthToken } from "@/utils/tokenStorage";
 import Socket from "@/components/socket/socket";
 import { emitUserOnline } from "@/components/socket/socketEmitters";
 const Login = () => {
@@ -95,8 +95,8 @@ const Login = () => {
         setAuthToken(response.token, response.user);
 
         Socket.auth = { token: response.token, userId: response.user._id };
+        console.log("About to connect socket with auth:", Socket.auth);
         Socket.connect();
-        console.log("socket connected", Socket.auth);
         
         // Emit user online status
         emitUserOnline(response.user._id);

@@ -2,12 +2,22 @@
 
 import { useState, useRef, useEffect } from "react";
 import Header from "@/components/header";
-import { useRouter } from "next/navigation";
 import AsideItems from "@/components/chat/asideitems";
 import ChatSection from "@/components/chat/chatSection";
-import { getAuthToken, getUser } from "@/services/tokenStorage";
-import { emitGetConversations, emitGetMessages, emitSendMessage } from "@/components/socket/socketEmitters";
-import { onConversationsGet, offConversationsGet, onMessagesGet, offMessagesGet, onMessageNew, offMessageNew } from "@/components/socket/socketListeners";
+import { getUser } from "@/utils/tokenStorage";
+import {
+  emitGetConversations,
+  emitGetMessages,
+  emitSendMessage,
+} from "@/components/socket/socketEmitters";
+import {
+  onConversationsGet,
+  offConversationsGet,
+  onMessagesGet,
+  offMessagesGet,
+  onMessageNew,
+  offMessageNew,
+} from "@/components/socket/socketListeners";
 
 export default function ChatPage() {
   const [conversations, setConversations] = useState([]);
@@ -20,61 +30,105 @@ export default function ChatPage() {
 
   // Handle new chat from header modal
   const handleNewChat = (user) => {
-    
+    const currentUser = getUser();
+
     // Create temporary conversation object for new chat
     const newChat = {
       id: `${user._id}`,
       name: user.name || user.username,
-      participants: [user?._id, user._id],
+      participants: [currentUser?._id, user._id],
       type: "private",
       isNew: true,
-      receiverId: user._id
+      receiverId: user._id,
     };
-    
+
     setActiveChat(newChat);
     setMessages([]);
     setShowMobileChat(true);
   };
 
   useEffect(() => {
-    // Get user from token storage
-    const user = getUser();
-    console.log("User from storage:", user);
-    if (user?._id) {
-      setCurrentUserId(user._id);
-      // Emit conversations:get
-      emitGetConversations(user._id);
+    try {
+      // Get user from token storage
+      const user = getUser();
+      if (user?._id) {
+        setCurrentUserId(user._id);
+        // Emit conversations:get
+       emitGetConversations(user._id, (response) => {
+  if (response?.success) {
+    setConversations(response.conversations);
+  } else {
+    console.error("Failed to load conversations", response);
+  }
+});
+      }
+
+      // // Listen for conversations
+      // onConversationsGet((data) => {
+      //   setConversations(data);
+      // });
+
+      // Listen for messages
+      onMessagesGet((data) => {
+        setMessages(data);
+      });
+
+      // Listen for new messages
+      onMessageNew((message) => {
+        console.log("New message received:", message);
+        // Transform backend message to frontend format
+        const transformedMessage = {
+          _id: message._id,
+          id: message._id,
+          senderId: message.senderId,
+          sender: message.senderId,
+          text: message.content, // Map content to text
+          content: message.content,
+          time: new Date(message.createdAt).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }), // Format time
+          createdAt: message.createdAt,
+          type: message.type,
+          file: message.file,
+          edited: message.edited,
+          deletedForEveryone: message.deletedForEveryone,
+          parentMessageId: message.parentMessageId,
+          conversationId: message.conversationId,
+        };
+        setMessages((prev) => {
+          if (prev.some((m) => m._id === message._id)) {
+            return prev;
+          }
+          return [...prev, transformedMessage];
+        });
+      });
+    } catch (error) {
+      console.error("Error in socket setup:", error);
     }
 
-    // Listen for conversations
-    onConversationsGet((data) => {
-      setConversations(data);
-    });
-
-    // Listen for messages
-    onMessagesGet((data) => {
-      setMessages(data);
-    });
-
-    // Listen for new messages
-    onMessageNew((message) => {
-      setMessages(prev => [...prev, message]);
-    });
-
     return () => {
-      offConversationsGet();
+      // offConversationsGet();
       offMessagesGet();
       offMessageNew();
     };
   }, []);
 
+  useEffect(() => {
+    console.log("Messages state:", messages);
+  }, [messages]);
+
   // Auto-select first conversation
   useEffect(() => {
-    if (conversations.length > 0 && !activeChat) {
-      setActiveChat(conversations[0]);
+    try {
+      if (conversations.length > 0 && !activeChat) {
+        setActiveChat(conversations[0]);
+      }
+    } catch (error) {
+      console.error("Error in auto-select first conversation:", error);
     }
-    
   }, [conversations, activeChat]);
+
   // Load messages when active chat changes
   useEffect(() => {
     if (activeChat?.id) {
@@ -83,7 +137,7 @@ export default function ChatPage() {
   }, [activeChat]);
 
   const handleThreadClick = (threadId) => {
-    const selectedConversation = conversations.find(c => c.id === threadId);
+    const selectedConversation = conversations.find((c) => c.id === threadId);
     if (selectedConversation) {
       setActiveChat(selectedConversation);
       setShowMobileChat(true);
@@ -93,8 +147,13 @@ export default function ChatPage() {
   const handleSendMessage = () => {
     // Fallback to get current user ID if not set
     const userId = currentUserId || getUser()?._id;
-    console.log("handleSendMessage called", { inputMessage, activeChat, currentUserId, userId });
-    
+    console.log("handleSendMessage called", {
+      inputMessage,
+      activeChat,
+      currentUserId,
+      userId,
+    });
+
     if (inputMessage.trim() && activeChat) {
       // Get receiverId from activeChat
       let receiverId;
@@ -103,21 +162,28 @@ export default function ChatPage() {
         receiverId = activeChat.receiverId;
       } else if (activeChat.participants) {
         // Existing conversation - filter out current user
-        receiverId = activeChat.participants.find(p => p !== userId);
+        receiverId = activeChat.participants.find((p) => p !== userId);
       }
 
       console.log("Receiver ID:", receiverId);
       if (receiverId) {
-        // Add message to local state immediately for UI feedback
-        const tempMessage = {
+        const senderMessage = {
           _id: `temp-${Date.now()}`,
+          id: `temp-${Date.now()}`,
           senderId: userId,
+          sender: userId,
           text: inputMessage.trim(),
+          content: inputMessage.trim(),
+          time: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
           createdAt: new Date().toISOString(),
-          isTemp: true
+          type: "text",
+          isTemp: true,
         };
-        setMessages(prev => [...prev, tempMessage]);
-        
+        setMessages((prev) => [...prev, senderMessage]);
+
         // Emit via socket
         emitSendMessage(receiverId, inputMessage.trim());
         setInputMessage("");
@@ -200,20 +266,19 @@ export default function ChatPage() {
     setMessages((prev) => [...prev, newMessage]);
   };
 
-
   return (
     <>
       <Header onNewChat={handleNewChat} />
       <div className="container mt-6">
         <div className="h-[calc(100vh-85px)] pb-4">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-[320px_minmax(0,1fr)] h-full">
-            <AsideItems 
+            <AsideItems
               conversations={conversations}
               activeChat={activeChat}
-              handleThreadClick={handleThreadClick} 
-              showMobileChat={showMobileChat} 
+              handleThreadClick={handleThreadClick}
+              showMobileChat={showMobileChat}
             />
-            <ChatSection 
+            <ChatSection
               activeChat={activeChat}
               messages={messages}
               inputMessage={inputMessage}
@@ -225,6 +290,7 @@ export default function ChatPage() {
               fileInputRef={fileInputRef}
               showMobileChat={showMobileChat}
               setShowMobileChat={setShowMobileChat}
+              currentUserId={currentUserId}
             />
           </div>
         </div>

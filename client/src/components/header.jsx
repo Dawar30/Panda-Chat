@@ -1,20 +1,23 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { logout } from "@/services/authService";
 import { getAllUsers } from "@/services/userService";
-import { clearAuthToken, getUser } from "@/services/tokenStorage";
+import { clearAuthToken, getUser } from "@/utils/tokenStorage";
 import UsersModal from "./UsersModal";
 
 export default function Header({ onNewChat }) {
-    const [name] = useState(() => {
-  if (typeof window !== "undefined") {
-   const user = getUser();
-   return user?.name || user?.username || "User";
-  }
-  return "User";
-});
+    const [name, setName] = useState("User");
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+        const user = getUser();
+        if (user?.name || user?.username) {
+            setName(user.name || user.username);
+        }
+    }, []);
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [users, setUsers] = useState([]);
@@ -30,11 +33,9 @@ export default function Header({ onNewChat }) {
   };
 
   const handleNewChatClick = async () => {
-    console.log("New chat button clicked");
     setLoading(true);
     try {
       const data = await getAllUsers();
-      console.log("Users data received:", data);
       setUsers(data);
       setIsModalOpen(true);
     } catch (error) {
@@ -45,7 +46,6 @@ export default function Header({ onNewChat }) {
   };
 
   const handleUserSelect = (user) => {
-    console.log("User selected:", user);
     setIsModalOpen(false);
     if (onNewChat) {
       onNewChat(user);
