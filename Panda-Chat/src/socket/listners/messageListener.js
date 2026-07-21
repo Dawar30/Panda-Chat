@@ -376,8 +376,8 @@ export function setupGroupMessageListeners(socket, io, userConnections, _unused,
                 return;
             }
 
-            if (!text) {
-                callback({ success: false, error: "text is required" });
+            if (!text && !fileSource) {
+                callback({ success: false, error: "text or file is required" });
                 return;
             }
 
@@ -474,8 +474,8 @@ export function setupGroupMessageListeners(socket, io, userConnections, _unused,
                 return;
             }
 
-            if (!text) {
-                callback({ success: false, error: "text is required" });
+            if (!text && !fileSource) {
+                callback({ success: false, error: "text or file is required" });
                 return;
             }
 
@@ -979,8 +979,8 @@ export function setupMessageListeners(socket, io, userConnections, _unused, emit
                 return;
             }
 
-            if (!text) {
-                callback({ success: false, error: "text is required" });
+            if (!text && !fileSource) {
+                callback({ success: false, error: "text or file is required" });
                 return;
             }
 
@@ -1073,8 +1073,8 @@ export function setupMessageListeners(socket, io, userConnections, _unused, emit
                 return;
             }
 
-            if (!text) {
-                callback({ success: false, error: "text is required" });
+            if (!text && !fileSource) {
+                callback({ success: false, error: "text or file is required" });
                 return;
             }
 
@@ -1199,8 +1199,8 @@ export function setupMessageListeners(socket, io, userConnections, _unused, emit
                 return;
             }
 
-            if (!text) {
-                callback({ success: false, error: "text is required" });
+            if (!text && !fileSource) {
+                callback({ success: false, error: "text or file is required" });
                 return;
             }
 
