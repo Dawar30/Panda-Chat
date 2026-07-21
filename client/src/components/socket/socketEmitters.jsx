@@ -41,6 +41,29 @@ export const emitSendMessage = (receiverId, text, file = null, callback) => {
   });
 };
 
+export const emitReplyMessage = (receiverId, parentMessageId, text, file = null, callback) => {
+  Socket.emit("message:reply", { receiverId, parentMessageId, text, file }, (res) => {
+    console.log("Message reply response:", res);
+    if (callback) callback(res);
+  });
+};
+
 export const emitGetPresence = (userId, callback) => {
   Socket.emit("presence:get", { userId }, callback);
+};
+
+export const emitEditMessage = (messageId, text, callback) => {
+  Socket.emit("message:update", { messageId, text }, callback);
+};
+
+export const emitDeleteMessage = (messageId, callback) => {
+  Socket.emit("message:delete", { messageId }, callback);
+};
+
+export const emitTypingStart = (receiverId) => {
+  Socket.emit("typing:start", { receiverId });
+};
+
+export const emitTypingStop = (receiverId) => {
+  Socket.emit("typing:stop", { receiverId });
 };

@@ -11,6 +11,7 @@ export const normalizeMessage = (message) => ({
   id: message._id,
   text: message.content,
   time: formatMessageTime(message.createdAt),
+  parentMessage: message.parentMessage,
 });
 
 export const normalizeConversation = (conversation) => ({

@@ -5,25 +5,30 @@ import Header from "@/components/header";
 import AsideItems from "@/components/chat/asideitems";
 import ChatSection from "@/components/chat/chatSection";
 import { getUser } from "@/utils/tokenStorage";
-import { emitSendMessage } from "@/components/socket/socketEmitters";
+import { emitSendMessage, emitEditMessage, emitDeleteMessage, emitReplyMessage } from "@/components/socket/socketEmitters";
 import { useSocketConnection } from "@/hooks/useSocketConnection";
 import { useConversations } from "@/hooks/useConversations";
 import { useMessages } from "@/hooks/useMessages";
 import { usePresence } from "@/hooks/usePresence";
+import { useTyping } from "@/hooks/useTyping";
+import { useMediaUpload } from "@/hooks/useMediaUpload";
 import { formatMessageTime } from "@/utils/chatHelpers";
 
 export default function ChatPage() {
   const [activeChat, setActiveChat] = useState(null);
   const [inputMessage, setInputMessage] = useState("");
+  const [editingMessageId, setEditingMessageId] = useState(null);
+  const [replyingTo, setReplyingTo] = useState(null);
   const [showMobileChat, setShowMobileChat] = useState(false);
-  const fileInputRef = useRef(null);
   const user = getUser();
   const currentUserId = user?._id;
 
   useSocketConnection(currentUserId);
-  const { conversations, isLoading: isLoadingConversations } = useConversations(currentUserId);
-  const { messages, setMessages } = useMessages(activeChat);
+  const { conversations, isLoading: isLoadingConversations, setConversations } = useConversations(currentUserId);
+  const { messages, setMessages } = useMessages(activeChat, currentUserId);
   const presence = usePresence(activeChat, currentUserId);
+  const { isSomeoneTyping, startTyping, stopTyping } = useTyping(currentUserId, activeChat);
+  const { fileInputRef, handleFileClick, handleFileChange } = useMediaUpload(activeChat, currentUserId, replyingTo, setMessages, setReplyingTo);
 
   // Handle new chat from header modal
   const handleNewChat = (selectedUser) => {
@@ -35,8 +40,12 @@ export default function ChatPage() {
       type: "private",
       isNew: true,
       receiverId: selectedUser._id,
+      lastMessage: "",
+      updatedAt: new Date().toISOString(),
     };
 
+    // Add to conversations list so it appears in sidebar
+    setConversations((prev) => [newChat, ...prev]);
     setActiveChat(newChat);
     setMessages([]);
     setShowMobileChat(true);
@@ -54,6 +63,18 @@ export default function ChatPage() {
     const userId = currentUserId;
 
     if (inputMessage.trim() && activeChat) {
+      // If editing, update the message instead of sending new one
+      if (editingMessageId) {
+        emitEditMessage(editingMessageId, inputMessage.trim(), (response) => {
+          if (response?.success) {
+            setEditingMessageId(null);
+            setInputMessage("");
+            stopTyping();
+          }
+        });
+        return;
+      }
+
       let receiverId;
       if (activeChat.isNew && activeChat.receiverId) {
         receiverId = activeChat.receiverId;
@@ -62,9 +83,10 @@ export default function ChatPage() {
       }
 
       if (receiverId) {
+        const temporaryMessageId = `temp-${Date.now()}`;
         const senderMessage = {
-          _id: `temp-${Date.now()}`,
-          id: `temp-${Date.now()}`,
+          _id: temporaryMessageId,
+          id: temporaryMessageId,
           senderId: userId,
           sender: userId,
           text: inputMessage.trim(),
@@ -73,77 +95,95 @@ export default function ChatPage() {
           createdAt: new Date().toISOString(),
           type: "text",
           isTemp: true,
+          parentMessageId: replyingTo?._id,
+          parentMessage: replyingTo,
         };
         setMessages((prev) => [...prev, senderMessage]);
 
-        emitSendMessage(receiverId, inputMessage.trim());
+        // Use reply emitter if replying to a message
+        if (replyingTo) {
+          emitReplyMessage(receiverId, replyingTo._id, inputMessage.trim(), null, (response) => {
+            if (!response?.success || !response.message) {
+              return;
+            }
+
+            const confirmedReply = {
+              ...response.message,
+              id: response.message._id,
+              text: response.message.content,
+              time: formatMessageTime(response.message.createdAt),
+              parentMessageId: response.message.parentMessageId?._id || response.message.parentMessageId,
+              parentMessage: response.message.parentMessageId || replyingTo,
+            };
+
+            setMessages((previousMessages) =>
+              previousMessages.map((message) =>
+                message._id === temporaryMessageId ? confirmedReply : message
+              )
+            );
+          });
+        } else {
+          emitSendMessage(receiverId, inputMessage.trim());
+        }
         setInputMessage("");
+        setReplyingTo(null);
+        stopTyping();
       }
     }
   };
 
   const handleKeyPress = (e) => {
+    if (e.key === "Escape" && editingMessageId) {
+      e.preventDefault();
+      setEditingMessageId(null);
+      setInputMessage("");
+      return;
+    }
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
   };
 
-  const handleFileClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      Array.from(files).forEach((file) => {
-        if (file.type.startsWith("image/")) {
-          handleImageUpload(file);
-        } else if (file.type.startsWith("video/")) {
-          handleVideoUpload(file);
-        } else {
-          handleDocumentUpload(file);
-        }
-      });
-      e.target.value = "";
+  const handleEditMessage = (message) => {
+    if (message.senderId === currentUserId) {
+      setEditingMessageId(message._id);
+      setInputMessage(message.text || message.content || "");
     }
   };
 
-  const handleImageUpload = (file) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const newMessage = {
-        id: `msg-${Date.now()}`,
-        sender: "me",
-        time: formatMessageTime(new Date().toISOString()),
-        image: e.target.result,
-        fileName: file.name,
-      };
-      setMessages((prev) => [...prev, newMessage]);
-    };
-    reader.readAsDataURL(file);
+  const handleDeleteMessage = (messageId) => {
+    emitDeleteMessage(messageId, (response) => {
+      if (response?.success) {
+        setMessages((prev) => prev.filter((msg) => msg._id !== messageId));
+      }
+    });
   };
 
-  const handleVideoUpload = (file) => {
-    const newMessage = {
-      id: `msg-${Date.now()}`,
-      sender: "me",
-      time: formatMessageTime(new Date().toISOString()),
-      video: URL.createObjectURL(file),
-      fileName: file.name,
-    };
-    setMessages((prev) => [...prev, newMessage]);
+  const handleCancelEdit = () => {
+    setEditingMessageId(null);
+    setInputMessage("");
   };
 
-  const handleDocumentUpload = (file) => {
-    const newMessage = {
-      id: `msg-${Date.now()}`,
-      sender: "me",
-      time: formatMessageTime(new Date().toISOString()),
-      document: file.name,
-      fileSize: (file.size / 1024 / 1024).toFixed(2) + " MB",
-    };
-    setMessages((prev) => [...prev, newMessage]);
+  const handleReplyMessage = (message) => {
+    const isOwnMessage = message.senderId === currentUserId || message.sender === "me";
+    setReplyingTo({
+      ...message,
+      name: isOwnMessage ? "You" : activeChat?.otherParticipant?.name || activeChat?.name || "Unknown"
+    });
+  };
+
+  const handleCancelReply = () => {
+    setReplyingTo(null);
+  };
+
+  const handleInputChange = (e) => {
+    setInputMessage(e.target.value);
+    if (e.target.value.trim()) {
+      startTyping();
+    } else {
+      stopTyping();
+    }
   };
 
   return (
@@ -173,6 +213,15 @@ export default function ChatPage() {
               setShowMobileChat={setShowMobileChat}
               currentUserId={currentUserId}
               presence={presence}
+              onEditMessage={handleEditMessage}
+              onDeleteMessage={handleDeleteMessage}
+              editingMessageId={editingMessageId}
+              handleCancelEdit={handleCancelEdit}
+              isSomeoneTyping={isSomeoneTyping}
+              handleInputChange={handleInputChange}
+              replyingTo={replyingTo}
+              handleCancelReply={handleCancelReply}
+              handleReplyMessage={handleReplyMessage}
             />
           </div>
         </div>

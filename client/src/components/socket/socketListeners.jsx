@@ -38,3 +38,43 @@ export const onUserStatus = (callback) => {
 export const offUserStatus = (callback) => {
   Socket.off("user:status", callback);
 };
+
+export const onMessageUpdated = (callback) => {
+  Socket.on("message:updated", callback);
+};
+
+export const offMessageUpdated = (callback) => {
+  Socket.off("message:updated", callback);
+};
+
+export const onMessageDeleted = (callback) => {
+  Socket.on("message:deleted", callback);
+};
+
+export const offMessageDeleted = (callback) => {
+  Socket.off("message:deleted", callback);
+};
+
+export const onMessageReply = (callback) => {
+  Socket.on("message:reply", callback);
+};
+
+export const offMessageReply = (callback) => {
+  Socket.off("message:reply", callback);
+};
+
+export const onTypingStart = (callback) => {
+  Socket.on("typing:start", callback);
+};
+
+export const offTypingStart = (callback) => {
+  Socket.off("typing:start", callback);
+};
+
+export const onTypingStop = (callback) => {
+  Socket.on("typing:stop", callback);
+};
+
+export const offTypingStop = (callback) => {
+  Socket.off("typing:stop", callback);
+};

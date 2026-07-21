@@ -35,5 +35,5 @@ export function useConversations(currentUserId) {
     };
   }, [currentUserId]);
 
-  return { conversations, isLoading };
+  return { conversations, isLoading, setConversations };
 }
